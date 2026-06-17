@@ -159,12 +159,13 @@ export const levels = [
     description:
       "Two triangles are connected by matching edges, creating a symmetric puzzle.",
     vertices: [
-      { id: 0, x: 170, y: 90, color: null },
-      { id: 1, x: 70, y: 360, color: null },
-      { id: 2, x: 270, y: 360, color: null },
-      { id: 3, x: 430, y: 90, color: null },
-      { id: 4, x: 330, y: 360, color: null },
-      { id: 5, x: 530, y: 360, color: null },
+      { id: 0, x: 170, y: 80, color: null },
+      { id: 1, x: 70, y: 290, color: null },
+      { id: 2, x: 270, y: 290, color: null },
+
+      { id: 3, x: 430, y: 170, color: null },
+      { id: 4, x: 330, y: 380, color: null },
+      { id: 5, x: 530, y: 380, color: null },
     ],
     edges: [
       [0, 1],
