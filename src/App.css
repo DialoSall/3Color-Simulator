@@ -1,0 +1,490 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 48px 5vw;
+}
+
+.hero {
+  max-width: 900px;
+  margin-bottom: 40px;
+}
+
+.eyebrow {
+  color: #0071e3;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  margin: 0 0 12px;
+}
+
+.hero h1 {
+  font-size: clamp(4rem, 12vw, 9rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  margin: 0;
+}
+
+.heroText {
+  color: #424245;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  line-height: 1.5;
+  max-width: 700px;
+  font-weight: 500;
+}
+
+.gameLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+.gamePanel,
+.statusPanel {
+  background: #ffffff;
+  border-radius: 34px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.gamePanel {
+  padding: 30px;
+}
+
+.levelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.levelHeader h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -0.05em;
+  margin: 0 0 10px;
+}
+
+.levelHeader p {
+  color: #424245;
+  line-height: 1.6;
+  font-weight: 500;
+  margin: 0;
+  max-width: 680px;
+}
+
+select {
+  min-width: 190px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: white;
+  color: #1d1d1f;
+  font-weight: 700;
+}
+
+.graphCanvasWrap {
+  width: 100%;
+  background:
+    radial-gradient(circle at top right, rgba(0, 113, 227, 0.12), transparent 34%),
+    #f5f5f7;
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.graphCanvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.edge {
+  stroke: #8e8e93;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.conflictEdge {
+  stroke: #ff3b30;
+  stroke-width: 8;
+}
+
+.vertexGroup {
+  cursor: pointer;
+}
+
+.vertex {
+  stroke: #ffffff;
+  stroke-width: 7;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.18));
+  transition: transform 0.18s ease, filter 0.18s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.vertexGroup:hover .vertex {
+  transform: scale(1.08);
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.24));
+}
+
+.vertexLabel {
+  fill: #1d1d1f;
+  font-size: 18px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.statusPanel {
+  padding: 28px;
+  position: sticky;
+  top: 24px;
+}
+
+.statusBox {
+  background: #f5f5f7;
+  border-radius: 24px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.statusBox.solved {
+  background: #e7f7ed;
+}
+
+.statusBox h3 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.statusBox p,
+.rules p {
+  color: #424245;
+  line-height: 1.6;
+  font-weight: 500;
+  margin: 0;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.stats div {
+  background: #f5f5f7;
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.stats span {
+  display: block;
+  color: #6e6e73;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.stats strong {
+  font-size: 2rem;
+  letter-spacing: -0.04em;
+}
+
+button {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  background: #0071e3;
+  color: white;
+  padding: 13px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+button:hover {
+  background: #0066cc;
+}
+
+.rules {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 20px;
+}
+
+.rules h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+}
+
+.homeHero {
+  margin-bottom: 56px;
+}
+
+.homeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.modeCard {
+  background: #ffffff;
+  border-radius: 34px;
+  padding: 34px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modeCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 85px rgba(0, 0, 0, 0.12);
+}
+
+.modeCard h2 {
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  margin: 0 0 18px;
+}
+
+.modeCard p {
+  color: #424245;
+  line-height: 1.6;
+  font-weight: 500;
+  margin-bottom: 28px;
+}
+
+.modeCard button:disabled {
+  background: #d1d1d6;
+  cursor: not-allowed;
+}
+
+.modeCard button:disabled:hover {
+  background: #d1d1d6;
+}
+
+.backButton {
+  width: auto;
+  margin-bottom: 36px;
+  background: #ffffff;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.backButton:hover {
+  background: #f5f5f7;
+}
+
+.customLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  align-items: start;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  color: #424245;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.formGroup input[type="number"] {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 16px;
+  padding: 12px 14px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #1d1d1f;
+}
+
+.formGroup input[type="range"] {
+  width: 100%;
+}
+
+.levelMap {
+  background: #ffffff;
+  border-radius: 34px;
+  padding: 30px;
+  margin-bottom: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.08);
+}
+
+.levelMapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.levelMapHeader h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+
+.levelProgressText {
+  margin: 0;
+  color: #6e6e73;
+  font-weight: 700;
+}
+
+.levelGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 12px;
+}
+
+.levelButton {
+  width: 100%;
+  min-height: 92px;
+  margin: 0;
+  padding: 14px;
+  border-radius: 20px;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.levelButton:hover:not(:disabled) {
+  background: #e8f2ff;
+  transform: translateY(-2px);
+}
+
+.levelButton.current {
+  border-color: #0071e3;
+  background: #e8f2ff;
+}
+
+.levelButton.completed {
+  background: #e7f7ed;
+}
+
+.levelButton.locked {
+  background: #eeeeef;
+  color: #8e8e93;
+  cursor: not-allowed;
+}
+
+.levelButton:disabled {
+  opacity: 0.7;
+}
+
+.levelButtonNumber {
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.levelButtonLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.levelNavigation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.navigationButton {
+  margin: 0;
+}
+
+.secondaryNavigation {
+  background: #ffffff;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+}
+
+.secondaryNavigation:hover:not(:disabled) {
+  background: #f5f5f7;
+}
+
+.navigationButton:disabled {
+  background: #d1d1d6;
+  color: #8e8e93;
+  cursor: not-allowed;
+}
+
+.nextLevelButton {
+  background: #34c759;
+}
+
+.nextLevelButton:hover {
+  background: #2fb350;
+}
+
+
+@media (max-width: 900px) {
+  .app {
+    padding: 34px 4vw;
+  }
+
+  .homeGrid,
+  .gameLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .levelHeader {
+    flex-direction: column;
+  }
+
+  select {
+    width: 100%;
+  }
+
+  .statusPanel {
+    position: static;
+  }
+  .customLayout {
+    grid-template-columns: 1fr;
+  }
+  .levelMapHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .levelGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .levelNavigation {
+    grid-template-columns: 1fr;
+  }
+}
