@@ -207,43 +207,52 @@ function LevelMode({ onBackHome }) {
 
             <section className="gameLayout">
             <div className="gamePanel">
-                <div className="levelHeader">
-                    <div>
-                    <p className="eyebrow">
-                        Level {currentLevel.id} · {currentLevel.difficulty}
-                    </p>
+              <div className="levelHeader">
+                  <div>
+                  <p className="eyebrow">
+                      Level {currentLevel.id} · {currentLevel.difficulty}
+                  </p>
 
-                    <h2>{currentLevel.name}</h2>
-                    <p>{currentLevel.description}</p>
-                    </div>
-                </div>
+                  <h2>{currentLevel.name}</h2>
+                  <p>{currentLevel.description}</p>
+                  </div>
+              </div>
 
-            <GraphCanvas
-                vertices={currentLevel.vertices}
-                edges={currentLevel.edges}
-                conflicts={conflicts}
-                onVertexClick={handleVertexClick}
-                width={currentLevel.width}
-                height={currentLevel.height}
-            />
+              <div className="quickInstructions">
+                <span className="instructionIcon">?</span>
 
-                <div className="levelNavigation">
-                <button
-                    className="navigationButton secondaryNavigation"
-                    disabled={!canGoPrevious}
-                    onClick={handlePreviousLevel}
-                >
-                    ← Previous
-                </button>
+                <p>
+                  Tap a circle to change its color. Color every circle so that circles
+                  connected by a line never have the same color.
+                </p>
+              </div>
+            
+              <GraphCanvas
+                  vertices={currentLevel.vertices}
+                  edges={currentLevel.edges}
+                  conflicts={conflicts}
+                  onVertexClick={handleVertexClick}
+                  width={currentLevel.width}
+                  height={currentLevel.height}
+              />
 
-                <button
-                    className="navigationButton"
-                    disabled={!canGoNext}
-                    onClick={handleNextLevel}
-                >
-                    Next Level →
-                </button>
-                </div>
+              <div className="levelNavigation">
+              <button
+                  className="navigationButton secondaryNavigation"
+                  disabled={!canGoPrevious}
+                  onClick={handlePreviousLevel}
+              >
+                  ← Previous
+              </button>
+
+              <button
+                  className="navigationButton"
+                  disabled={!canGoNext}
+                  onClick={handleNextLevel}
+              >
+                  Next Level →
+              </button>
+              </div>
             </div>
 
             <aside className="statusPanel">
@@ -257,7 +266,7 @@ function LevelMode({ onBackHome }) {
                     ? levelIndex === levels.length - 1
                         ? "You completed every available level."
                         : `Level ${levelIndex + 2} is now unlocked.`
-                    : "Click vertices to cycle through colors."}
+                    : "Click or tap a cirlce to change it's color."}
                 </p>
                 </div>
 

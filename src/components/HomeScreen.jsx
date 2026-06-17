@@ -6,8 +6,8 @@ function HomeScreen({ onPlayLevels, onCustomGraph }) {
         <h1>3Color</h1>
 
         <p className="heroText">
-          Color graph vertices using red, blue, and yellow. Adjacent vertices
-          cannot share the same color.
+          Color every circle using red, blue, and yellow.
+          Circles connected by a line cannot have the same color.
         </p>
       </section>
 

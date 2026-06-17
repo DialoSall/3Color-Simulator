@@ -451,6 +451,36 @@ button:hover {
   background: #2fb350;
 }
 
+.quickInstructions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #e8f2ff;
+  border: 1px solid rgba(0, 113, 227, 0.18);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.quickInstructions p {
+  margin: 0;
+  color: #1d1d1f;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.instructionIcon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0071e3;
+  color: white;
+  font-weight: 900;
+}
+
 
 @media (max-width: 900px) {
   .app {
@@ -487,5 +517,13 @@ button:hover {
 
   .levelNavigation {
     grid-template-columns: 1fr;
+  }
+  .quickInstructions {
+    align-items: flex-start;
+    padding: 13px 14px;
+  }
+
+  .quickInstructions p {
+    font-size: 0.92rem;
   }
 }

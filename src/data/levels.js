@@ -4,7 +4,7 @@ export const levels = [
     name: "Three-Way Split",
     difficulty: "Intro",
     description:
-      "A triangle requires all three colors. No two connected vertices may match.",
+      "Give each of the three circles a different color.",
     vertices: [
       { id: 0, x: 300, y: 90, color: null },
       { id: 1, x: 150, y: 340, color: null },
