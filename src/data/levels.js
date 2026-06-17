@@ -22,7 +22,7 @@ export const levels = [
     name: "Around the Square",
     difficulty: "Intro",
     description:
-      "This graph can be solved with only two colors, even though three are available.",
+      "You can solve this puzzle using only two of the three colors.",
     vertices: [
       { id: 0, x: 170, y: 120, color: null },
       { id: 1, x: 430, y: 120, color: null },
@@ -42,7 +42,7 @@ export const levels = [
     name: "House Rules",
     difficulty: "Easy",
     description:
-      "The roof creates a triangle, so this graph cannot be colored with only two colors.",
+      "The triangle-shaped roof means you will need all three colors.",
     vertices: [
       { id: 0, x: 180, y: 210, color: null },
       { id: 1, x: 420, y: 210, color: null },
@@ -65,7 +65,7 @@ export const levels = [
     name: "The Diamond",
     difficulty: "Easy",
     description:
-      "Two triangles share an edge. Coloring the shared vertices constrains the entire graph.",
+      "These two triangles share the same two circles, so each choice affects both sides.",
     vertices: [
       { id: 0, x: 300, y: 80, color: null },
       { id: 1, x: 300, y: 390, color: null },
@@ -108,7 +108,7 @@ export const levels = [
     name: "Broken Pentagon",
     difficulty: "Medium",
     description:
-      "An odd cycle with an added shortcut creates tighter color constraints.",
+      "The extra shortcut makes this five-sided puzzle more difficult.",
     vertices: [
       { id: 0, x: 300, y: 70, color: null },
       { id: 1, x: 500, y: 190, color: null },
@@ -212,7 +212,7 @@ export const levels = [
     name: "The Wheel",
     difficulty: "Challenging",
     description:
-      "The center touches every outer vertex, forcing the surrounding cycle to coordinate.",
+      "The center connects to every outside circle, making each color choice important.",
     vertices: [
       { id: 0, x: 300, y: 60, color: null },
       { id: 1, x: 490, y: 150, color: null },
@@ -242,7 +242,7 @@ export const levels = [
     name: "Color Cascade",
     difficulty: "Challenging",
     description:
-      "A chain of overlapping triangles causes color choices to propagate through the entire graph.",
+      "Each triangle overlaps with the next, so one color choice can affect the entire puzzle.",
     width: 800,
     height: 600,
     vertices: [
@@ -318,7 +318,7 @@ export const levels = [
     name: "Second Ring",
     difficulty: "Hard",
     description:
-      "A central triangle controls an outer layer, which then constrains a second set of vertices.",
+      "The center affects the outer circles, which then affect the circles beyond them.",
     width: 800,
     height: 600,
     vertices: [
@@ -362,7 +362,7 @@ export const levels = [
     name: "Hidden Structure",
     difficulty: "Hard",
     description:
-      "The graph no longer follows an obvious visual pattern. Find the underlying three-color structure.",
+      "The pattern is harder to see now. Look carefully for circles that affect several others.",
     width: 900,
     height: 650,
     vertices: [
@@ -410,7 +410,7 @@ export const levels = [
     name: "The Web",
     difficulty: "Expert",
     description:
-      "A dense asymmetric graph with very little coloring flexibility. Every region affects another.",
+      "Almost every part of this puzzle affects another, leaving little room for mistakes.",
     width: 900,
     height: 650,
     vertices: [

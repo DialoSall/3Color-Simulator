@@ -266,7 +266,7 @@ function LevelMode({ onBackHome }) {
                     ? levelIndex === levels.length - 1
                         ? "You completed every available level."
                         : `Level ${levelIndex + 2} is now unlocked.`
-                    : "Click or tap a cirlce to change it's color."}
+                    : "Click or tap a circle to change it's color."}
                 </p>
                 </div>
 
@@ -296,8 +296,7 @@ function LevelMode({ onBackHome }) {
                 <div className="rules">
                 <h3>Rules</h3>
                 <p>
-                    Every vertex must be colored, and no connected vertices may
-                    share the same color.
+                    Color every circle. Circles connected by a line cannot share the same color.
                 </p>
                 </div>
             </aside>

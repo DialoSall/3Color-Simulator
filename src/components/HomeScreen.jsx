@@ -25,13 +25,13 @@ function HomeScreen({ onPlayLevels, onCustomGraph }) {
 
         <article className="modeCard" onClick={onCustomGraph}>
           <p className="eyebrow">Mode 2</p>
-          <h2>Custom Graph</h2>
+          <h2>Custom Mode</h2>
           <p>
-            Generate a random graph or build your own graph by placing vertices
-            and connecting edges.
+            Generate a new puzzle and choose how many circles it contains and
+            how connected it should be.
           </p>
 
-          <button>Build Graph</button>
+          <button>Generate Puzzle</button>
         </article>
       </section>
     </main>
