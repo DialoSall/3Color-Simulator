@@ -34,7 +34,9 @@ function LevelMode({ onBackHome }) {
   const [currentLevel, setCurrentLevel] = useState(() =>
     cloneLevel(levels[0])
   );
-  const [moves, setMoves] = useState(0);
+  const [recolors, setRecolors] = useState(0);
+  const [visitedVertices, setVisitedVertices] = useState(() => new Set());
+  const [lastVertexId, setLastVertexId] = useState(null);
   const [highestCompleted, setHighestCompleted] = useState(
     getSavedHighestCompleted
   );
@@ -88,10 +90,31 @@ function LevelMode({ onBackHome }) {
 
     setLevelIndex(nextIndex);
     setCurrentLevel(cloneLevel(levels[nextIndex]));
-    setMoves(0);
+    setRecolors(0);
+    setVisitedVertices(new Set());
+    setLastVertexId(null);
   }
 
   function handleVertexClick(vertexId) {
+    const hasVisitedBefore = visitedVertices.has(vertexId);
+
+    const isReturningToVertex =
+      hasVisitedBefore &&
+      lastVertexId !== null &&
+      lastVertexId !== vertexId;
+
+    if (isReturningToVertex) {
+      setRecolors((previousRecolors) => previousRecolors + 1);
+    }
+
+    setVisitedVertices((previousVisited) => {
+      const updatedVisited = new Set(previousVisited);
+      updatedVisited.add(vertexId);
+      return updatedVisited;
+    });
+
+    setLastVertexId(vertexId);
+
     setCurrentLevel((previousLevel) => {
       const updatedVertices = previousLevel.vertices.map((vertex) => {
         if (vertex.id !== vertexId) {
@@ -114,13 +137,13 @@ function LevelMode({ onBackHome }) {
         vertices: updatedVertices,
       };
     });
-
-    setMoves((previousMoves) => previousMoves + 1);
   }
 
   function handleReset() {
     setCurrentLevel(cloneLevel(levels[levelIndex]));
-    setMoves(0);
+    setRecolors(0);
+    setVisitedVertices(new Set());
+    setLastVertexId(null);
   }
 
   function handlePreviousLevel() {
@@ -266,14 +289,14 @@ function LevelMode({ onBackHome }) {
                     ? levelIndex === levels.length - 1
                         ? "You completed every available level."
                         : `Level ${levelIndex + 2} is now unlocked.`
-                    : "Click or tap a circle to change it's color."}
+                    : "Click or tap a circle to change its color."}
                 </p>
                 </div>
 
                 <div className="stats">
                 <div>
-                    <span>Moves</span>
-                    <strong>{moves}</strong>
+                    <span>Recolors</span>
+                    <strong>{recolors}</strong>
                 </div>
 
                 <div>

@@ -5,14 +5,6 @@ import { generateRandomGraph } from "../utils/randomGraph";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 
-function cloneGraph(graph) {
-  return {
-    ...graph,
-    vertices: graph.vertices.map((vertex) => ({ ...vertex })),
-    edges: graph.edges.map((edge) => [...edge]),
-  };
-}
-
 function resetGraphColors(graph) {
   return {
     ...graph,
@@ -29,7 +21,9 @@ function CustomMode({ onBackHome }) {
   const [currentGraph, setCurrentGraph] = useState(() =>
     generateRandomGraph(8, 0.25)
   );
-  const [moves, setMoves] = useState(0);
+  const [recolors, setRecolors] = useState(0);
+  const [visitedVertices, setVisitedVertices] = useState(() => new Set());
+  const [lastVertexId, setLastVertexId] = useState(null);
 
   const conflicts = useMemo(() => {
     return getConflicts(currentGraph.vertices, currentGraph.edges);
@@ -50,39 +44,72 @@ function handleGenerateGraph() {
     return;
   }
 
-  const nextGraph = generateRandomGraph(parsedVertexCount, edgeProbability);
+  const nextGraph = generateRandomGraph(
+    parsedVertexCount,
+    edgeProbability
+  );
+
   setCurrentGraph(nextGraph);
-  setMoves(0);
+  setRecolors(0);
+  setVisitedVertices(new Set());
+  setLastVertexId(null);
 }
 
-  function handleResetColors() {
-    setCurrentGraph((previousGraph) => resetGraphColors(previousGraph));
-    setMoves(0);
+function handleResetColors() {
+  setCurrentGraph((previousGraph) =>
+    resetGraphColors(previousGraph)
+  );
+
+  setRecolors(0);
+  setVisitedVertices(new Set());
+  setLastVertexId(null);
+}
+
+function handleVertexClick(vertexId) {
+  const hasVisitedBefore = visitedVertices.has(vertexId);
+
+  const isReturningToVertex =
+    hasVisitedBefore &&
+    lastVertexId !== null &&
+    lastVertexId !== vertexId;
+
+  // Returning to a previously colored circle counts as one recolor.
+  // Repeated taps on the same circle to reach blue or yellow do not.
+  if (isReturningToVertex) {
+    setRecolors((previousRecolors) => previousRecolors + 1);
   }
 
-  function handleVertexClick(vertexId) {
-    setCurrentGraph((previousGraph) => {
-      const updatedVertices = previousGraph.vertices.map((vertex) => {
-        if (vertex.id !== vertexId) return vertex;
+  setVisitedVertices((previousVisited) => {
+    const updatedVisited = new Set(previousVisited);
+    updatedVisited.add(vertexId);
+    return updatedVisited;
+  });
 
-        const currentColorIndex = colorCycle.indexOf(vertex.color);
-        const nextColor =
-          colorCycle[(currentColorIndex + 1) % colorCycle.length];
+  setLastVertexId(vertexId);
 
-        return {
-          ...vertex,
-          color: nextColor,
-        };
-      });
+  setCurrentGraph((previousGraph) => {
+    const updatedVertices = previousGraph.vertices.map((vertex) => {
+      if (vertex.id !== vertexId) {
+        return vertex;
+      }
+
+      const currentColorIndex = colorCycle.indexOf(vertex.color);
+
+      const nextColor =
+        colorCycle[(currentColorIndex + 1) % colorCycle.length];
 
       return {
-        ...previousGraph,
-        vertices: updatedVertices,
+        ...vertex,
+        color: nextColor,
       };
     });
 
-    setMoves((previousMoves) => previousMoves + 1);
-  }
+    return {
+      ...previousGraph,
+      vertices: updatedVertices,
+    };
+  });
+}
 
   return (
     <main className="app">
@@ -178,8 +205,8 @@ function handleGenerateGraph() {
 
           <div className="stats">
             <div>
-              <span>Moves</span>
-              <strong>{moves}</strong>
+              <span>Recolors</span>
+              <strong>{recolors}</strong>
             </div>
 
             <div>
