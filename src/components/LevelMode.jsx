@@ -14,6 +14,13 @@ function cloneLevel(level) {
   };
 }
 
+function formatTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 function getSavedHighestCompleted() {
   if (typeof window === "undefined") {
     return -1;
@@ -41,6 +48,10 @@ function LevelMode({ onBackHome }) {
     getSavedHighestCompleted
   );
 
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [resets, setResets] = useState(0);
+
   const conflicts = useMemo(() => {
     return getConflicts(currentLevel.vertices, currentLevel.edges);
   }, [currentLevel]);
@@ -48,6 +59,22 @@ function LevelMode({ onBackHome }) {
   const solved = useMemo(() => {
     return isSolved(currentLevel.vertices, currentLevel.edges);
   }, [currentLevel]);
+
+  useEffect(() => {
+    if (!timerRunning || solved) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setElapsedSeconds(
+        (previousSeconds) => previousSeconds + 1
+      );
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [timerRunning, solved]);
 
   const highestUnlocked = Math.min(
     highestCompleted + 1,
@@ -93,9 +120,16 @@ function LevelMode({ onBackHome }) {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
+
+    setElapsedSeconds(0);
+    setTimerRunning(false);
+    setResets(0);
   }
 
   function handleVertexClick(vertexId) {
+    if (!timerRunning && !solved) {
+      setTimerRunning(true);
+    }
     const hasVisitedBefore = visitedVertices.has(vertexId);
 
     const isReturningToVertex =
@@ -141,9 +175,12 @@ function LevelMode({ onBackHome }) {
 
   function handleReset() {
     setCurrentLevel(cloneLevel(levels[levelIndex]));
+
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
+
+    setResets((previousResets) => previousResets + 1);
   }
 
   function handlePreviousLevel() {
@@ -294,15 +331,25 @@ function LevelMode({ onBackHome }) {
                 </div>
 
                 <div className="stats">
-                <div>
-                    <span>Recolors</span>
-                    <strong>{recolors}</strong>
-                </div>
+                  <div>
+                      <span>Recolors</span>
+                      <strong>{recolors}</strong>
+                  </div>
 
-                <div>
-                    <span>Conflicts</span>
-                    <strong>{conflicts.length}</strong>
-                </div>
+                  <div>
+                    <span>Resets</span>
+                    <strong>{resets}</strong>
+                  </div>
+
+                  <div>
+                    <span>Time</span>
+                    <strong>{formatTime(elapsedSeconds)}</strong>
+                  </div>
+
+                  <div>
+                      <span>Conflicts</span>
+                      <strong>{conflicts.length}</strong>
+                  </div>
                 </div>
 
                 <button onClick={handleReset}>Reset Puzzle</button>
