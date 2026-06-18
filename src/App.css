@@ -481,6 +481,14 @@ button:hover {
   font-weight: 900;
 }
 
+.graphCanvas,
+.vertexGroup,
+.vertexLabel {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 
 @media (max-width: 900px) {
   .app {
