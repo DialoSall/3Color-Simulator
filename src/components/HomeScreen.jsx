@@ -1,38 +1,137 @@
+import { useState } from "react";
+
+const GAME_URL = "https://3color.vercel.app/";
+
 function HomeScreen({ onPlayLevels, onCustomGraph }) {
+  const [shareMessage, setShareMessage] = useState("");
+  
+  async function copyLinkToClipboard() {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(GAME_URL);
+        return true;
+      }
+
+      const textArea = document.createElement("textarea");
+      textArea.value = GAME_URL;
+      textArea.setAttribute("readonly", "");
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.opacity = "0";
+      textArea.style.fontSize = "16px";
+
+      document.body.appendChild(textArea);
+
+      textArea.focus();
+      textArea.select();
+      textArea.setSelectionRange(0, textArea.value.length);
+
+      const copied = document.execCommand("copy");
+
+      document.body.removeChild(textArea);
+
+      return copied;
+    } catch {
+      return false;
+    }
+  }
+
+  async function handleShare() {
+    const shareData = {
+      title: "3Color",
+      text: "Can you complete all 15 levels of this graph-coloring puzzle?",
+      url: GAME_URL,
+    };
+
+    try {
+      if (navigator.share && window.isSecureContext) {
+        await navigator.share(shareData);
+        setShareMessage("Thanks for sharing!");
+        return;
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+    }
+
+    const copied = await copyLinkToClipboard();
+
+    if (copied) {
+      setShareMessage("Link copied!");
+    } else {
+      setShareMessage(`Copy this link: ${GAME_URL}`);
+    }
+  }
+
   return (
-    <main className="app">
-      <section className="hero homeHero">
-        <p className="eyebrow">Graph Coloring Simulator</p>
-        <h1>3Color</h1>
+    <main className="app homeApp">
+      <section className="homeChallenge">
+        <div className="homeCopy">
+          <p className="eyebrow">Graph Coloring Puzzle</p>
 
-        <p className="heroText">
-          Color every circle using red, blue, and yellow.
-          Circles connected by a line cannot have the same color.
-        </p>
-      </section>
+          <h1>3Color</h1>
 
-      <section className="homeGrid">
-        <article className="modeCard" onClick={onPlayLevels}>
-          <p className="eyebrow">Mode 1</p>
-          <h2>Level Mode</h2>
-          <p>
-            Solve curated graph coloring puzzles that gradually become more
-            difficult.
+          <p className="homeChallengeText">
+            Can you complete all 15 levels?
           </p>
 
-          <button>Play Levels</button>
-        </article>
-
-        <article className="modeCard" onClick={onCustomGraph}>
-          <p className="eyebrow">Mode 2</p>
-          <h2>Custom Mode</h2>
-          <p>
-            Generate a new puzzle and choose how many circles it contains and
-            how connected it should be.
+          <p className="heroText">
+            Color every circle using red, blue, and yellow. Circles
+            connected by a line cannot have the same color. The rules are
+            simple. The puzzles get harder.
           </p>
 
-          <button>Generate Puzzle</button>
-        </article>
+          <div className="homeStats">
+            <span>15 Levels</span>
+            <span>3 Colors</span>
+            <span>No Matching Lines</span>
+          </div>
+
+          <div className="homeActions">
+            <button className="primaryHomeButton" onClick={onPlayLevels}>
+              Start Challenge
+            </button>
+
+            <button className="shareHomeButton" onClick={handleShare}>
+              Share 3Color
+            </button>
+
+            <button
+              className="secondaryHomeButton"
+              onClick={onCustomGraph}
+            >
+              Generate Random Puzzle
+            </button>
+          </div>
+
+          {shareMessage && (
+            <p className="shareMessage">{shareMessage}</p>
+          )}
+        </div>
+
+        <div className="homePreviewCard" aria-hidden="true">
+          <div className="previewGraph">
+            <svg viewBox="0 0 420 320" className="previewSvg">
+              <line x1="210" y1="55" x2="85" y2="245" />
+              <line x1="210" y1="55" x2="335" y2="245" />
+              <line x1="85" y1="245" x2="335" y2="245" />
+              <line x1="85" y1="245" x2="210" y2="180" />
+              <line x1="335" y1="245" x2="210" y2="180" />
+
+              <circle cx="210" cy="55" r="28" className="previewRed" />
+              <circle cx="85" cy="245" r="28" className="previewBlue" />
+              <circle cx="335" cy="245" r="28" className="previewYellow" />
+              <circle cx="210" cy="180" r="28" className="previewRed" />
+            </svg>
+          </div>
+
+          <div className="previewCaption">
+            <p>Simple rule.</p>
+            <strong>Harder than it looks.</strong>
+          </div>
+        </div>
       </section>
     </main>
   );

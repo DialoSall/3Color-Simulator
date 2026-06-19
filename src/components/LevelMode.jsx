@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { levels } from "../data/levels";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
@@ -65,6 +65,8 @@ function LevelMode({ onBackHome }) {
     return isSolved(currentLevel.vertices, currentLevel.edges);
   }, [currentLevel]);
 
+  const graphSectionRef = useRef(null);
+
   useEffect(() => {
     if (!timerRunning || solved) {
       return;
@@ -111,7 +113,24 @@ function LevelMode({ onBackHome }) {
     });
   }, [solved, levelIndex]);
 
-  function loadLevel(nextIndex) {
+  function scrollToGraphOnMobile() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (window.innerWidth > 900) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      graphSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+  }
+
+  function loadLevel(nextIndex, shouldScrollToGraph = false) {
     if (
       nextIndex < 0 ||
       nextIndex >= levels.length ||
@@ -129,6 +148,10 @@ function LevelMode({ onBackHome }) {
     setElapsedSeconds(0);
     setTimerRunning(false);
     setResets(0);
+
+    if (shouldScrollToGraph) {
+      scrollToGraphOnMobile();
+    }
   }
 
   function handleVertexClick(vertexId) {
@@ -193,7 +216,7 @@ function LevelMode({ onBackHome }) {
       return;
     }
 
-    loadLevel(levelIndex - 1);
+    loadLevel(levelIndex - 1, true);
   }
 
   function handleNextLevel() {
@@ -201,7 +224,7 @@ function LevelMode({ onBackHome }) {
       return;
     }
 
-    loadLevel(levelIndex + 1);
+    loadLevel(levelIndex + 1, true);
   }
 
     return (
@@ -251,7 +274,7 @@ function LevelMode({ onBackHome }) {
                     key={level.id}
                     className={classNames}
                     disabled={isLocked}
-                    onClick={() => loadLevel(index)}
+                    onClick={() => loadLevel(index, true)}
                     >
                     <span className="levelButtonNumber">
                         {isCompleted ? "✓" : level.id}
@@ -270,7 +293,7 @@ function LevelMode({ onBackHome }) {
             </div>
             </section>
 
-            <section className="gameLayout">
+            <section className="gameLayout" ref={graphSectionRef}>
             <div className="gamePanel">
               <div className="levelHeader">
                   <div>
@@ -362,7 +385,7 @@ function LevelMode({ onBackHome }) {
                 {solved && levelIndex < levels.length - 1 && (
                 <button
                     className="nextLevelButton"
-                    onClick={() => loadLevel(levelIndex + 1)}
+                    onClick={() => loadLevel(levelIndex + 1, true)}
                 >
                     Continue to Level {levelIndex + 2} →
                 </button>

@@ -49,6 +49,159 @@ select {
   font-weight: 500;
 }
 
+.homeApp {
+  display: flex;
+  align-items: center;
+}
+
+.homeChallenge {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+  gap: 44px;
+  align-items: center;
+}
+
+.homeCopy h1 {
+  font-size: clamp(4.5rem, 13vw, 10rem);
+  line-height: 0.85;
+  letter-spacing: -0.07em;
+  margin: 0 0 22px;
+}
+
+.homeChallengeText {
+  font-size: clamp(2rem, 5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+  margin: 0 0 18px;
+  max-width: 720px;
+}
+
+.homeStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.homeStats span {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #424245;
+  font-weight: 800;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.homePreviewCard {
+  background:
+    radial-gradient(circle at top right, rgba(0, 113, 227, 0.18), transparent 35%),
+    #ffffff;
+  border-radius: 38px;
+  padding: 28px;
+  min-height: 430px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.previewSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.previewSvg line {
+  stroke: #8e8e93;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.previewSvg circle {
+  stroke: #ffffff;
+  stroke-width: 8;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.22));
+}
+
+.previewRed {
+  fill: #ff3b30;
+}
+
+.previewBlue {
+  fill: #0071e3;
+}
+
+.previewYellow {
+  fill: #ffd60a;
+}
+
+.previewCaption {
+  background: #f5f5f7;
+  border-radius: 24px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.previewCaption p {
+  margin: 0 0 4px;
+  color: #6e6e73;
+  font-weight: 800;
+}
+
+.previewCaption strong {
+  font-size: 1.6rem;
+  letter-spacing: -0.04em;
+}
+
+.homeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.homeActions button {
+  width: auto;
+  margin: 0;
+}
+
+.primaryHomeButton {
+  background: #0071e3;
+  color: white;
+  padding: 15px 24px;
+}
+
+.shareHomeButton {
+  background: #1d1d1f;
+  color: white;
+  padding: 15px 24px;
+}
+
+.shareHomeButton:hover {
+  background: #333336;
+}
+
+.secondaryHomeButton {
+  background: #ffffff;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  padding: 15px 24px;
+}
+
+.secondaryHomeButton:hover {
+  background: #f5f5f7;
+}
+
+.shareMessage {
+  margin-top: 12px;
+  color: #34c759;
+  font-weight: 800;
+}
+
 .gameLayout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -498,6 +651,35 @@ button:hover {
   .homeGrid,
   .gameLayout {
     grid-template-columns: 1fr;
+  }
+  .homeApp {
+    align-items: flex-start;
+  }
+
+  .homeChallenge {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .homePreviewCard {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .homeStats {
+    flex-direction: column;
+  }
+
+  .homeStats span {
+    width: 100%;
+    text-align: center;
+  }
+  .homeActions {
+    flex-direction: column;
+  }
+
+  .homeActions button {
+    width: 100%;
   }
 
   .levelHeader {
