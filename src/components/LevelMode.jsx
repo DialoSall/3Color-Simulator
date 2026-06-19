@@ -27,6 +27,11 @@ function getSavedHighestCompleted() {
   }
 
   const savedValue = window.localStorage.getItem(PROGRESS_KEY);
+
+  if (savedValue === null) {
+    return -1;
+  }
+
   const parsedValue = Number(savedValue);
 
   if (!Number.isInteger(parsedValue)) {
