@@ -14,7 +14,15 @@ function cloneLevel(level) {
   };
 }
 
-function formatTime(totalSeconds) {
+function formatTime(totalMilliseconds) {
+  const totalSeconds = Math.floor(totalMilliseconds / 1000);
+
+  if (totalSeconds < 60) {
+    const milliseconds = totalMilliseconds % 1000;
+
+    return `${totalSeconds}.${String(milliseconds).padStart(3, "0")}`;
+  }
+
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
@@ -53,9 +61,10 @@ function LevelMode({ onBackHome }) {
     getSavedHighestCompleted
   );
 
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [resets, setResets] = useState(0);
+  const elapsedMillisecondsRef = useRef(0);
 
   const conflicts = useMemo(() => {
     return getConflicts(currentLevel.vertices, currentLevel.edges);
@@ -68,27 +77,36 @@ function LevelMode({ onBackHome }) {
   const graphSectionRef = useRef(null);
   const completionCardRef = useRef(null);
 
+
+  useEffect(() => {
+    elapsedMillisecondsRef.current = elapsedMilliseconds;
+  }, [elapsedMilliseconds]);
+
   useEffect(() => {
     if (!timerRunning || solved) {
       return;
     }
 
+    const startedAt =
+      window.performance.now() - elapsedMillisecondsRef.current;
+
     const intervalId = window.setInterval(() => {
-      setElapsedSeconds(
-        (previousSeconds) => previousSeconds + 1
+      setElapsedMilliseconds(
+        Math.floor(window.performance.now() - startedAt)
       );
-    }, 1000);
+    }, 25);
 
     return () => {
       window.clearInterval(intervalId);
     };
   }, [timerRunning, solved]);
 
+
   const highestUnlocked = Math.min(
     Math.max(highestCompleted + 1, solved ? levelIndex + 1 : 0),
     levels.length - 1
   );
-
+  
   const canGoPrevious = levelIndex > 0;
 
   const canGoNext =
@@ -163,7 +181,7 @@ function LevelMode({ onBackHome }) {
     setVisitedVertices(new Set());
     setLastVertexId(null);
 
-    setElapsedSeconds(0);
+    setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
 
@@ -234,7 +252,7 @@ function LevelMode({ onBackHome }) {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
-    setElapsedSeconds(0);
+    setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
   }
@@ -345,7 +363,7 @@ function LevelMode({ onBackHome }) {
 
                 <div>
                   <span>Time</span>
-                  <strong>{formatTime(elapsedSeconds)}</strong>
+                  <strong>{formatTime(elapsedMilliseconds)}</strong>
                 </div>
 
                 <div>
@@ -390,7 +408,7 @@ function LevelMode({ onBackHome }) {
                   <div className="completionStats">
                     <div>
                       <span>Time</span>
-                      <strong>{formatTime(elapsedSeconds)}</strong>
+                      <strong>{formatTime(elapsedMilliseconds)}</strong>
                     </div>
 
                     <div>
