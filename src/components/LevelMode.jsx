@@ -66,6 +66,7 @@ function LevelMode({ onBackHome }) {
   }, [currentLevel]);
 
   const graphSectionRef = useRef(null);
+  const completionCardRef = useRef(null);
 
   useEffect(() => {
     if (!timerRunning || solved) {
@@ -84,7 +85,7 @@ function LevelMode({ onBackHome }) {
   }, [timerRunning, solved]);
 
   const highestUnlocked = Math.min(
-    highestCompleted + 1,
+    Math.max(highestCompleted + 1, solved ? levelIndex + 1 : 0),
     levels.length - 1
   );
 
@@ -111,6 +112,23 @@ function LevelMode({ onBackHome }) {
 
       return nextHighest;
     });
+  }, [solved, levelIndex]);
+
+  useEffect(() => {
+    if (!solved || typeof window === "undefined") {
+      return;
+    }
+
+    if (window.innerWidth > 900) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      completionCardRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 250);
   }, [solved, levelIndex]);
 
   function scrollToGraphOnMobile() {
@@ -211,6 +229,16 @@ function LevelMode({ onBackHome }) {
     setResets((previousResets) => previousResets + 1);
   }
 
+  function handleReplayLevel() {
+    setCurrentLevel(cloneLevel(levels[levelIndex]));
+    setRecolors(0);
+    setVisitedVertices(new Set());
+    setLastVertexId(null);
+    setElapsedSeconds(0);
+    setTimerRunning(false);
+    setResets(0);
+  }
+
   function handlePreviousLevel() {
     if (!canGoPrevious) {
       return;
@@ -293,7 +321,10 @@ function LevelMode({ onBackHome }) {
             </div>
             </section>
 
-            <section className="gameLayout" ref={graphSectionRef}>
+            <section
+              className={`gameLayout ${solved ? "gameLayoutSolved" : ""}`}
+              ref={graphSectionRef}
+            >
             <div className="gamePanel">
               <div className="levelHeader">
                   <div>
@@ -306,14 +337,92 @@ function LevelMode({ onBackHome }) {
                   </div>
               </div>
 
-              <div className="quickInstructions">
-                <span className="instructionIcon">?</span>
+              <div className="gameStatsBar">
+                <div>
+                  <span>Level</span>
+                  <strong>{currentLevel.id}</strong>
+                </div>
 
-                <p>
-                  Tap a circle to change its color. Color every circle so that circles
-                  connected by a line never have the same color.
-                </p>
+                <div>
+                  <span>Time</span>
+                  <strong>{formatTime(elapsedSeconds)}</strong>
+                </div>
+
+                <div>
+                  <span>Recolors</span>
+                  <strong>{recolors}</strong>
+                </div>
+
+                <div>
+                  <span>Conflicts</span>
+                  <strong>{conflicts.length}</strong>
+                </div>
               </div>
+
+              {!solved && (
+                <div className="quickInstructions">
+                  <span className="instructionIcon">?</span>
+
+                  <p>
+                    Tap a circle to change its color. Color every circle so that circles
+                    connected by a line never have the same color.
+                  </p>
+                </div>
+              )}
+              
+              {solved && (
+                <div
+                  className="completionCard"
+                  ref={completionCardRef}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="completionBadge">✓</div>
+
+                  <p className="completionEyebrow">Level {currentLevel.id} Complete</p>
+
+                  <h3>
+                    {levelIndex === levels.length - 1
+                      ? "You finished every level."
+                      : `Level ${levelIndex + 2} unlocked.`}
+                  </h3>
+
+                  <div className="completionStats">
+                    <div>
+                      <span>Time</span>
+                      <strong>{formatTime(elapsedSeconds)}</strong>
+                    </div>
+
+                    <div>
+                      <span>Recolors</span>
+                      <strong>{recolors}</strong>
+                    </div>
+
+                    <div>
+                      <span>Resets</span>
+                      <strong>{resets}</strong>
+                    </div>
+                  </div>
+
+                  <div className="completionActions">
+                    <button
+                      className="completionSecondaryButton"
+                      onClick={handleReplayLevel}
+                    >
+                      Replay Level
+                    </button>
+
+                    {levelIndex < levels.length - 1 && (
+                      <button
+                        className="completionPrimaryButton"
+                        onClick={handleNextLevel}
+                      >
+                        Continue to Level {levelIndex + 2} →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             
               <GraphCanvas
                   vertices={currentLevel.vertices}
@@ -324,80 +433,54 @@ function LevelMode({ onBackHome }) {
                   height={currentLevel.height}
               />
 
-              <div className="levelNavigation">
-              <button
-                  className="navigationButton secondaryNavigation"
-                  disabled={!canGoPrevious}
-                  onClick={handlePreviousLevel}
-              >
-                  ← Previous
-              </button>
 
-              <button
-                  className="navigationButton"
-                  disabled={!canGoNext}
-                  onClick={handleNextLevel}
-              >
-                  Next Level →
-              </button>
-              </div>
+
+              {!solved && (
+                <div className="levelNavigation">
+                  <button
+                    className="navigationButton secondaryNavigation"
+                    disabled={!canGoPrevious}
+                    onClick={handlePreviousLevel}
+                  >
+                    ← Previous
+                  </button>
+
+                  <button
+                    className="navigationButton"
+                    disabled={!canGoNext}
+                    onClick={handleNextLevel}
+                  >
+                    Next Level →
+                  </button>
+                </div>
+              )}
             </div>
 
-            <aside className="statusPanel">
+            {!solved && (
+              <aside className="statusPanel">
                 <p className="eyebrow">Status</p>
 
-                <div className={solved ? "statusBox solved" : "statusBox"}>
-                <h3>{solved ? "Level Complete!" : "Keep Coloring"}</h3>
+                <div className="statusBox">
+                  <h3>{conflicts.length > 0 ? "Fix Conflicts" : "Keep Coloring"}</h3>
 
-                <p>
-                    {solved
-                    ? levelIndex === levels.length - 1
-                        ? "You completed every available level."
-                        : `Level ${levelIndex + 2} is now unlocked.`
-                    : "Click or tap a circle to change its color."}
-                </p>
-                </div>
-
-                <div className="stats">
-                  <div>
-                      <span>Recolors</span>
-                      <strong>{recolors}</strong>
-                  </div>
-
-                  <div>
-                    <span>Resets</span>
-                    <strong>{resets}</strong>
-                  </div>
-
-                  <div>
-                    <span>Time</span>
-                    <strong>{formatTime(elapsedSeconds)}</strong>
-                  </div>
-
-                  <div>
-                      <span>Conflicts</span>
-                      <strong>{conflicts.length}</strong>
-                  </div>
+                  <p>
+                    {conflicts.length > 0
+                      ? "Some connected circles share the same color. Change one of them to fix the graph."
+                      : "Click or tap a circle to change its color."}
+                  </p>
                 </div>
 
                 <button onClick={handleReset}>Reset Puzzle</button>
 
-                {solved && levelIndex < levels.length - 1 && (
-                <button
-                    className="nextLevelButton"
-                    onClick={() => loadLevel(levelIndex + 1, true)}
-                >
-                    Continue to Level {levelIndex + 2} →
-                </button>
-                )}
-
                 <div className="rules">
-                <h3>Rules</h3>
-                <p>
+                  <h3>Rules</h3>
+
+                  <p>
                     Color every circle. Circles connected by a line cannot share the same color.
-                </p>
+                  </p>
                 </div>
-            </aside>
+              </aside>
+            )}
             </section>
         </main>
     );

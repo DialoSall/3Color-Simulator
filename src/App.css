@@ -208,6 +208,15 @@ select {
   gap: 28px;
   align-items: start;
 }
+.gameLayoutSolved {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gameLayoutSolved .gamePanel {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
 
 .gamePanel,
 .statusPanel {
@@ -242,6 +251,37 @@ select {
   margin: 0;
   max-width: 680px;
 }
+.gameStatsBar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.gameStatsBar div {
+  background: #f5f5f7;
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.gameStatsBar span {
+  display: block;
+  color: #6e6e73;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.gameStatsBar strong {
+  display: block;
+  color: #1d1d1f;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
 
 select {
   min-width: 190px;
@@ -317,9 +357,6 @@ select {
   margin-bottom: 18px;
 }
 
-.statusBox.solved {
-  background: #e7f7ed;
-}
 
 .statusBox h3 {
   margin: 0 0 8px;
@@ -447,6 +484,116 @@ button:hover {
 
 .backButton:hover {
   background: #f5f5f7;
+}
+
+.completionCard {
+  margin: 0 0 22px;
+  padding: 26px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(52, 199, 89, 0.18), transparent 34%),
+    #ffffff;
+  border: 1px solid rgba(52, 199, 89, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  animation: completionPop 0.35s ease both;
+}
+
+.completionBadge {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #34c759;
+  color: white;
+  font-size: 2rem;
+  font-weight: 900;
+  box-shadow: 0 14px 28px rgba(52, 199, 89, 0.32);
+}
+
+.completionEyebrow {
+  margin: 0 0 8px;
+  color: #34c759;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.completionCard h3 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  letter-spacing: -0.05em;
+}
+
+.completionStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.completionStats div {
+  background: #f5f5f7;
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.completionStats span {
+  display: block;
+  margin-bottom: 6px;
+  color: #6e6e73;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.completionStats strong {
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.completionActions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 12px;
+}
+
+.completionActions button {
+  margin-bottom: 0;
+}
+
+.completionSecondaryButton {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.completionSecondaryButton:hover {
+  background: #eeeeef;
+}
+
+.completionPrimaryButton {
+  background: #34c759;
+}
+
+.completionPrimaryButton:hover {
+  background: #2fb350;
+}
+
+@keyframes completionPop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .customLayout {
@@ -596,14 +743,6 @@ button:hover {
   cursor: not-allowed;
 }
 
-.nextLevelButton {
-  background: #34c759;
-}
-
-.nextLevelButton:hover {
-  background: #2fb350;
-}
-
 .quickInstructions {
   display: flex;
   align-items: center;
@@ -686,6 +825,25 @@ button:hover {
     flex-direction: column;
   }
 
+  .gameStatsBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .gameStatsBar div {
+    min-width: 0;
+    padding: 12px 10px;
+  }
+
+  .gameStatsBar span {
+    font-size: 0.62rem;
+    letter-spacing: 0.035em;
+    white-space: nowrap;
+  }
+
+  .gameStatsBar strong {
+    font-size: 1.15rem;
+  }
   select {
     width: 100%;
   }
@@ -716,4 +874,13 @@ button:hover {
   .quickInstructions p {
     font-size: 0.92rem;
   }
+
+  .completionStats {
+    grid-template-columns: 1fr;
+  }
+
+  .completionActions {
+    grid-template-columns: 1fr;
+  }
+
 }
