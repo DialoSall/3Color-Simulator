@@ -64,7 +64,9 @@ function LevelMode({ onBackHome }) {
   const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [resets, setResets] = useState(0);
+  const [hoveredVertexId, setHoveredVertexId] = useState(null);
   const elapsedMillisecondsRef = useRef(0);
+  
 
   const conflicts = useMemo(() => {
     return getConflicts(currentLevel.vertices, currentLevel.edges);
@@ -74,6 +76,7 @@ function LevelMode({ onBackHome }) {
     return isSolved(currentLevel.vertices, currentLevel.edges);
   }, [currentLevel]);
 
+  const activeVertexId = hoveredVertexId;
   const graphSectionRef = useRef(null);
   const completionCardRef = useRef(null);
 
@@ -106,7 +109,7 @@ function LevelMode({ onBackHome }) {
     Math.max(highestCompleted + 1, solved ? levelIndex + 1 : 0),
     levels.length - 1
   );
-  
+
   const canGoPrevious = levelIndex > 0;
 
   const canGoNext =
@@ -184,6 +187,7 @@ function LevelMode({ onBackHome }) {
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
+    setHoveredVertexId(null);
 
     if (shouldScrollToGraph) {
       scrollToGraphOnMobile();
@@ -243,6 +247,7 @@ function LevelMode({ onBackHome }) {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
+    setHoveredVertexId(null);
 
     setResets((previousResets) => previousResets + 1);
   }
@@ -252,6 +257,7 @@ function LevelMode({ onBackHome }) {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
+    setHoveredVertexId(null);
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
@@ -443,12 +449,15 @@ function LevelMode({ onBackHome }) {
               )}
             
               <GraphCanvas
-                  vertices={currentLevel.vertices}
-                  edges={currentLevel.edges}
-                  conflicts={conflicts}
-                  onVertexClick={handleVertexClick}
-                  width={currentLevel.width}
-                  height={currentLevel.height}
+                vertices={currentLevel.vertices}
+                edges={currentLevel.edges}
+                conflicts={conflicts}
+                onVertexClick={handleVertexClick}
+                width={currentLevel.width}
+                height={currentLevel.height}
+                activeVertexId={activeVertexId}
+                onVertexHover={setHoveredVertexId}
+                onVertexLeave={() => setHoveredVertexId(null)}
               />
 
 

@@ -208,6 +208,7 @@ select {
   gap: 28px;
   align-items: start;
 }
+
 .gameLayoutSolved {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -251,6 +252,7 @@ select {
   margin: 0;
   max-width: 680px;
 }
+
 .gameStatsBar {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -282,7 +284,6 @@ select {
   letter-spacing: -0.04em;
 }
 
-
 select {
   min-width: 190px;
   border: 1px solid rgba(0, 0, 0, 0.14);
@@ -312,11 +313,27 @@ select {
   stroke: #8e8e93;
   stroke-width: 5;
   stroke-linecap: round;
+  transition:
+    stroke-width 0.16s ease,
+    opacity 0.16s ease;
 }
 
 .conflictEdge {
   stroke: #ff3b30;
   stroke-width: 8;
+}
+
+.activeEdge {
+  stroke-width: 9;
+  opacity: 1;
+}
+
+.conflictEdge.activeEdge {
+  stroke-width: 10;
+}
+
+.dimmedEdge {
+  opacity: 0.28;
 }
 
 .vertexGroup {
@@ -327,7 +344,10 @@ select {
   stroke: #ffffff;
   stroke-width: 7;
   filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.18));
-  transition: transform 0.18s ease, filter 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease,
+    opacity 0.18s ease;
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -335,6 +355,15 @@ select {
 .vertexGroup:hover .vertex {
   transform: scale(1.08);
   filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.24));
+}
+
+.adjacentVertex {
+  transform: scale(1.06);
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.2));
+}
+
+.dimmedVertex {
+  opacity: 0.42;
 }
 
 .vertexLabel {
@@ -356,7 +385,6 @@ select {
   padding: 22px;
   margin-bottom: 18px;
 }
-
 
 .statusBox h3 {
   margin: 0 0 8px;
@@ -443,7 +471,9 @@ button:hover {
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .modeCard:hover {
@@ -781,7 +811,6 @@ button:hover {
   -webkit-touch-callout: none;
 }
 
-
 @media (max-width: 900px) {
   .app {
     padding: 34px 4vw;
@@ -791,6 +820,7 @@ button:hover {
   .gameLayout {
     grid-template-columns: 1fr;
   }
+
   .homeApp {
     align-items: flex-start;
   }
@@ -813,6 +843,7 @@ button:hover {
     width: 100%;
     text-align: center;
   }
+
   .homeActions {
     flex-direction: column;
   }
@@ -844,6 +875,7 @@ button:hover {
   .gameStatsBar strong {
     font-size: 1.15rem;
   }
+
   select {
     width: 100%;
   }
@@ -851,9 +883,11 @@ button:hover {
   .statusPanel {
     position: static;
   }
+
   .customLayout {
     grid-template-columns: 1fr;
   }
+
   .levelMapHeader {
     align-items: flex-start;
     flex-direction: column;
@@ -866,6 +900,7 @@ button:hover {
   .levelNavigation {
     grid-template-columns: 1fr;
   }
+
   .quickInstructions {
     align-items: flex-start;
     padding: 13px 14px;
@@ -882,5 +917,4 @@ button:hover {
   .completionActions {
     grid-template-columns: 1fr;
   }
-
 }

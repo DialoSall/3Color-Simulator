@@ -21,57 +21,125 @@ function GraphCanvas({
   onVertexClick,
   width = 600,
   height = 480,
+  activeVertexId = null,
+  onVertexHover,
+  onVertexLeave,
 }) {
-  const conflictKeys = new Set(conflicts.map(([a, b]) => getEdgeKey(a, b)));
+  const conflictKeys = new Set(
+    conflicts.map(([a, b]) => getEdgeKey(a, b))
+  );
+
   const vertexRadius = getVertexRadius(vertices.length);
 
   const getVertexById = (id) => {
     return vertices.find((vertex) => vertex.id === id);
   };
 
+  const activeEdgeKeys = new Set();
+  const adjacentVertexIds = new Set();
+
+  if (activeVertexId !== null) {
+    for (const [a, b] of edges) {
+      if (a === activeVertexId || b === activeVertexId) {
+        activeEdgeKeys.add(getEdgeKey(a, b));
+        adjacentVertexIds.add(a === activeVertexId ? b : a);
+      }
+    }
+  }
+
+  const hasActiveVertex = activeVertexId !== null;
+
   return (
     <div className="graphCanvasWrap">
-      <svg className="graphCanvas" viewBox={`0 0 ${width} ${height}`}>
+      <svg
+        className="graphCanvas"
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Interactive graph coloring puzzle"
+      >
         {edges.map(([a, b]) => {
           const start = getVertexById(a);
           const end = getVertexById(b);
-          const isConflict = conflictKeys.has(getEdgeKey(a, b));
+
+          if (!start || !end) {
+            return null;
+          }
+
+          const edgeKey = getEdgeKey(a, b);
+          const isConflict = conflictKeys.has(edgeKey);
+          const isActiveEdge = activeEdgeKeys.has(edgeKey);
+
+          const classNames = [
+            "edge",
+            isConflict ? "conflictEdge" : "",
+            isActiveEdge ? "activeEdge" : "",
+            hasActiveVertex && !isActiveEdge ? "dimmedEdge" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
           return (
             <line
-              key={`${a}-${b}`}
+              key={edgeKey}
+              className={classNames}
               x1={start.x}
               y1={start.y}
               x2={end.x}
               y2={end.y}
-              className={isConflict ? "edge conflictEdge" : "edge"}
             />
           );
         })}
 
-        {vertices.map((vertex) => (
-          <g
-            key={vertex.id}
-            className="vertexGroup"
-            onClick={() => onVertexClick(vertex.id)}
-          >
-            <circle
-              cx={vertex.x}
-              cy={vertex.y}
-              r={vertexRadius}
-              fill={colorMap[vertex.color]}
-              className="vertex"
-            />
-            <text
-              x={vertex.x}
-              y={vertex.y + 6}
-              textAnchor="middle"
-              className="vertexLabel"
+        {vertices.map((vertex) => {
+          const isAdjacentVertex = adjacentVertexIds.has(vertex.id);
+
+          const classNames = [
+            "vertex",
+            isAdjacentVertex ? "adjacentVertex" : "",
+            hasActiveVertex &&
+            vertex.id !== activeVertexId &&
+            !isAdjacentVertex
+              ? "dimmedVertex"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          return (
+            <g
+              key={vertex.id}
+              className="vertexGroup"
+              onPointerEnter={(event) => {
+                if (event.pointerType === "mouse") {
+                  onVertexHover?.(vertex.id);
+                }
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === "mouse") {
+                  onVertexLeave?.();
+                }
+              }}
+              onClick={() => onVertexClick(vertex.id)}
             >
-              {vertex.id}
-            </text>
-          </g>
-        ))}
+              <circle
+                className={classNames}
+                cx={vertex.x}
+                cy={vertex.y}
+                r={vertexRadius}
+                fill={colorMap[vertex.color]}
+              />
+
+              <text
+                className="vertexLabel"
+                x={vertex.x}
+                y={vertex.y + 6}
+                textAnchor="middle"
+              >
+                {vertex.id}
+              </text>
+            </g>
+          );
+        })}
       </svg>
     </div>
   );
