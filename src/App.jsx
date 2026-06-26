@@ -1,24 +1,17 @@
-import { useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import HomeScreen from "./components/HomeScreen";
 import LevelMode from "./components/LevelMode";
 import CustomMode from "./components/CustomMode";
 
 function App() {
-  const [mode, setMode] = useState("home");
-
-  if (mode === "levels") {
-    return <LevelMode onBackHome={() => setMode("home")} />;
-  }
-
-  if (mode === "custom") {
-    return <CustomMode onBackHome={() => setMode("home")} />;
-  }
-
   return (
-    <HomeScreen
-      onPlayLevels={() => setMode("levels")}
-      onCustomGraph={() => setMode("custom")}
-    />
+    <Routes>
+      <Route path="/" element={<HomeScreen />} />
+      <Route path="/levels" element={<Navigate to="/levels/1" replace />} />
+      <Route path="/levels/:levelId" element={<LevelMode />} />
+      <Route path="/custom" element={<CustomMode />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

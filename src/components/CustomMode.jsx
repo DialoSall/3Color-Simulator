@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { generateRandomGraph } from "../utils/randomGraph";
@@ -15,7 +16,8 @@ function resetGraphColors(graph) {
   };
 }
 
-function CustomMode({ onBackHome }) {
+function CustomMode() {
+  const navigate = useNavigate();
   const [vertexCountInput, setVertexCountInput] = useState("8");
   const [edgeProbability, setEdgeProbability] = useState(0.25);
   const [currentGraph, setCurrentGraph] = useState(() =>
@@ -113,7 +115,7 @@ function handleVertexClick(vertexId) {
 
   return (
     <main className="app">
-      <button className="backButton" onClick={onBackHome}>
+      <button className="backButton" onClick={() => navigate("/")}>
         ← Back Home
       </button>
 

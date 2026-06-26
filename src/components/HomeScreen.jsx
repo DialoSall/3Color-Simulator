@@ -1,9 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 const GAME_URL = "https://3color.vercel.app/";
 
-function HomeScreen({ onPlayLevels, onCustomGraph }) {
+function HomeScreen() {
+  const navigate = useNavigate();
   const [shareMessage, setShareMessage] = useState("");
+
   
   async function copyLinkToClipboard() {
     try {
@@ -74,7 +77,7 @@ function HomeScreen({ onPlayLevels, onCustomGraph }) {
           <h1>3Color</h1>
 
           <p className="homeChallengeText">
-            Can you complete all 15 levels?
+            Can you complete all 30 levels?
           </p>
 
           <p className="heroText">
@@ -84,13 +87,16 @@ function HomeScreen({ onPlayLevels, onCustomGraph }) {
           </p>
 
           <div className="homeStats">
-            <span>15 Levels</span>
+            <span>30 Levels</span>
             <span>3 Colors</span>
             <span>No Matching Lines</span>
           </div>
 
           <div className="homeActions">
-            <button className="primaryHomeButton" onClick={onPlayLevels}>
+            <button
+              className="primaryHomeButton"
+              onClick={() => navigate("/levels/1")}
+            >
               Start Challenge
             </button>
 
@@ -100,7 +106,7 @@ function HomeScreen({ onPlayLevels, onCustomGraph }) {
 
             <button
               className="secondaryHomeButton"
-              onClick={onCustomGraph}
+              onClick={() => navigate("/custom")}
             >
               Generate Random Puzzle
             </button>

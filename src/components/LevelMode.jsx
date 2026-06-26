@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { levels } from "../data/levels";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
@@ -48,11 +49,29 @@ function getSavedHighestCompleted() {
 
   return Math.min(Math.max(parsedValue, -1), levels.length - 1);
 }
+function getLevelIndexFromParam(levelId) {
+  const parsedLevelId = Number(levelId);
 
-function LevelMode({ onBackHome }) {
-  const [levelIndex, setLevelIndex] = useState(0);
+  if (!Number.isInteger(parsedLevelId)) {
+    return 0;
+  }
+
+  return parsedLevelId - 1;
+}
+
+function LevelMode() {
+  const navigate = useNavigate();
+  const { levelId } = useParams();
+
+  const requestedStartingIndex = getLevelIndexFromParam(levelId);
+  const safeStartingIndex = Math.min(
+    Math.max(requestedStartingIndex, 0),
+    levels.length - 1
+  );
+
+  const [levelIndex, setLevelIndex] = useState(safeStartingIndex);
   const [currentLevel, setCurrentLevel] = useState(() =>
-    cloneLevel(levels[0])
+    cloneLevel(levels[safeStartingIndex])
   );
   const [recolors, setRecolors] = useState(0);
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
@@ -117,6 +136,34 @@ function LevelMode({ onBackHome }) {
     levelIndex + 1 <= highestUnlocked;
 
   useEffect(() => {
+    const requestedIndex = getLevelIndexFromParam(levelId);
+
+    if (requestedIndex < 0 || requestedIndex >= levels.length) {
+      navigate("/levels/1", { replace: true });
+      return;
+    }
+
+    if (requestedIndex > highestUnlocked) {
+      navigate(`/levels/${levels[highestUnlocked].id}`, { replace: true });
+      return;
+    }
+
+    if (requestedIndex === levelIndex) {
+      return;
+    }
+
+    setLevelIndex(requestedIndex);
+    setCurrentLevel(cloneLevel(levels[requestedIndex]));
+    setRecolors(0);
+    setVisitedVertices(new Set());
+    setLastVertexId(null);
+    setElapsedMilliseconds(0);
+    setTimerRunning(false);
+    setResets(0);
+    setHoveredVertexId(null);
+  }, [levelId, highestUnlocked, levelIndex, navigate]);
+
+  useEffect(() => {
     if (!solved) {
       return;
     }
@@ -177,6 +224,8 @@ function LevelMode({ onBackHome }) {
     ) {
       return;
     }
+
+    navigate(`/levels/${levels[nextIndex].id}`);
 
     setLevelIndex(nextIndex);
     setCurrentLevel(cloneLevel(levels[nextIndex]));
@@ -281,8 +330,8 @@ function LevelMode({ onBackHome }) {
 
     return (
         <main className="app">
-            <button className="backButton" onClick={onBackHome}>
-            ← Back Home
+            <button className="backButton" onClick={() => navigate("/")}>
+              ← Back Home
             </button>
 
             <section className="hero">
