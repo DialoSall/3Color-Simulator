@@ -14,7 +14,7 @@ This project was built to make graph coloring more visual, playable, and accessi
 
 ## Features
 
-- 15 progressive campaign levels
+- 25 progressive campaign levels
 - Random graph mode
 - Conflict detection
 - Recolor, reset, and timer tracking
