@@ -6,6 +6,81 @@ function normalizeEdge(edge) {
   const [a, b] = edge;
   return a < b ? `${a}-${b}` : `${b}-${a}`;
 }
+function getVertexRadius(vertexCount) {
+  if (vertexCount <= 8) return 34;
+  if (vertexCount <= 12) return 30;
+  if (vertexCount <= 16) return 26;
+  return 25;
+}
+
+function distanceFromPointToSegment(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+
+  if (dx === 0 && dy === 0) {
+    return {
+      distance: Math.hypot(point.x - start.x, point.y - start.y),
+      position: 0,
+    };
+  }
+
+  const position =
+    ((point.x - start.x) * dx + (point.y - start.y) * dy) /
+    (dx * dx + dy * dy);
+
+  const clampedPosition = Math.max(0, Math.min(1, position));
+
+  const closestX = start.x + clampedPosition * dx;
+  const closestY = start.y + clampedPosition * dy;
+
+  return {
+    distance: Math.hypot(point.x - closestX, point.y - closestY),
+    position,
+  };
+}
+
+function validateLevelLayout(level) {
+  const warnings = [];
+  const vertexRadius = getVertexRadius(level.vertices.length);
+  const clearance = vertexRadius + 4;
+
+  const verticesById = new Map(
+    level.vertices.map((vertex) => [vertex.id, vertex])
+  );
+
+  for (const [a, b] of level.edges) {
+    const start = verticesById.get(a);
+    const end = verticesById.get(b);
+
+    if (!start || !end) {
+      continue;
+    }
+
+    for (const vertex of level.vertices) {
+      if (vertex.id === a || vertex.id === b) {
+        continue;
+      }
+
+      const { distance, position } = distanceFromPointToSegment(
+        vertex,
+        start,
+        end
+      );
+
+      const isBetweenEndpoints = position > 0.06 && position < 0.94;
+
+      if (isBetweenEndpoints && distance < clearance) {
+        warnings.push(
+          `Edge [${a}, ${b}] passes ${distance.toFixed(
+            1
+          )}px from vertex ${vertex.id}.`
+        );
+      }
+    }
+  }
+
+  return warnings;
+}
 
 function validateLevelShape(level, index) {
   const errors = [];
@@ -206,6 +281,8 @@ console.log(`Checking ${levels.length} levels...\n`);
 levels.forEach((level, index) => {
   const label = `Level ${level.id ?? index + 1}: ${level.name ?? "Untitled"}`;
   const { errors, warnings } = validateLevelShape(level, index);
+  const layoutWarnings = validateLevelLayout(level);
+  warnings.push(...layoutWarnings);
 
   if (errors.length > 0) {
     totalErrors += errors.length;
@@ -251,7 +328,7 @@ levels.forEach((level, index) => {
   }
 
   if (warnings.length > 0) {
-    console.log(`⚠️  ${label}`);
+    console.log(`FLAG  ${label}`);
 
     for (const warning of warnings) {
       totalWarnings += 1;
