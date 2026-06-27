@@ -2,7 +2,7 @@
 
 3Color is an interactive browser puzzle game based on the graph 3-coloring problem.
 
-**Live Site:** https://3color.vercel.app/
+**Live Site:** https://3color.app/
 
 ![3Color preview](public/3color-preview.jpg)
 

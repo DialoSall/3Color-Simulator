@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-const GAME_URL = "https://3color.vercel.app/";
+const GAME_URL = "https://3color.app/";
 
 function HomeScreen() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ function HomeScreen() {
   async function handleShare() {
     const shareData = {
       title: "3Color",
-      text: "Can you complete all 15 levels of this graph-coloring puzzle?",
+      text: "Can you complete all 30 levels of this graph-coloring puzzle?",
       url: GAME_URL,
     };
 
