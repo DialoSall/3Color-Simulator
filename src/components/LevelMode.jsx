@@ -199,19 +199,15 @@ function LevelMode() {
     }, 250);
   }, [solved, levelIndex]);
 
-  function scrollToGraphOnMobile() {
+  function scrollToGraph() {
     if (typeof window === "undefined") {
-      return;
-    }
-
-    if (window.innerWidth > 900) {
       return;
     }
 
     window.setTimeout(() => {
       graphSectionRef.current?.scrollIntoView({
         behavior: "smooth",
-        block: "start",
+        block: "center",
       });
     }, 0);
   }
@@ -239,7 +235,7 @@ function LevelMode() {
     setHoveredVertexId(null);
 
     if (shouldScrollToGraph) {
-      scrollToGraphOnMobile();
+      scrollToGraph();
     }
   }
 
