@@ -100,6 +100,13 @@ function HomeScreen() {
               Start Challenge
             </button>
 
+            <button
+              className="secondaryHomeButton"
+              onClick={() => navigate("/daily")}
+            >
+              Today's Puzzle
+            </button>
+
             <button className="shareHomeButton" onClick={handleShare}>
               Share 3Color
             </button>
