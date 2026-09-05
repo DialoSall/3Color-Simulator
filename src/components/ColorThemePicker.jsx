@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { colorThemes } from "../data/colorThemes";
 
 const COLOR_SLOTS = [
@@ -14,36 +13,19 @@ function ColorThemePicker({
   customTheme,
   onCustomThemeChange,
 }) {
-  const colorInputRefs = useRef({});
-
   function handlePresetClick(themeId) {
     onThemeChange(themeId);
   }
 
-  function handleColorCircleClick(colorSlot) {
-    if (selectedThemeId !== "custom") {
-      onCustomThemeChange({
-        id: "custom",
-        name: "Custom",
-        colors: {
-          ...activeTheme.colors,
-        },
-      });
-
-      onThemeChange("custom");
-    }
-
-    window.setTimeout(() => {
-      colorInputRefs.current[colorSlot]?.click();
-    }, 0);
-  }
-
   function handleCustomColorChange(colorSlot, colorValue) {
+    const baseColors =
+      selectedThemeId === "custom" ? customTheme.colors : activeTheme.colors;
+
     onCustomThemeChange({
       id: "custom",
       name: "Custom",
       colors: {
-        ...customTheme.colors,
+        ...baseColors,
         [colorSlot]: colorValue,
       },
     });
@@ -60,18 +42,26 @@ function ColorThemePicker({
 
       <div className="themeColorDots" aria-label="Current color theme colors">
         {COLOR_SLOTS.map((slot) => (
-          <button
+          <label
             key={slot.key}
-            type="button"
             className="themeColorDotButton"
-            onClick={() => handleColorCircleClick(slot.key)}
             aria-label={`Change ${slot.label}`}
           >
             <span
               className="themeColorDot"
               style={{ backgroundColor: activeTheme.colors[slot.key] }}
             />
-          </button>
+
+            <input
+              className="themeColorInput"
+              type="color"
+              value={activeTheme.colors[slot.key]}
+              onChange={(event) =>
+                handleCustomColorChange(slot.key, event.target.value)
+              }
+              aria-label={`Choose ${slot.label}`}
+            />
+          </label>
         ))}
       </div>
 
@@ -99,26 +89,8 @@ function ColorThemePicker({
         ))}
       </div>
 
-      {COLOR_SLOTS.map((slot) => (
-        <input
-          key={slot.key}
-          ref={(element) => {
-            colorInputRefs.current[slot.key] = element;
-          }}
-          className="hiddenColorInput"
-          type="color"
-          value={customTheme.colors[slot.key]}
-          onChange={(event) =>
-            handleCustomColorChange(slot.key, event.target.value)
-          }
-          aria-label={`Choose ${slot.label}`}
-        />
-      ))}
-
       {selectedThemeId === "custom" && (
-        <p className="themeHint">
-          Custom colors are saved on this device.
-        </p>
+        <p className="themeHint">Custom colors are saved on this device.</p>
       )}
     </section>
   );
