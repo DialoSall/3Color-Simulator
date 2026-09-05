@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { getDailyPuzzle } from "../data/dailyPuzzles";
+import ColorThemePicker from "./ColorThemePicker";
+import { DEFAULT_THEME_ID, getThemeById } from "../data/colorThemes";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const DAILY_COMPLETIONS_KEY = "3color-daily-completions";

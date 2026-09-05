@@ -1,11 +1,7 @@
+import { getThemeById, DEFAULT_THEME_ID } from "../data/colorThemes";
 import { getEdgeKey } from "../utils/graphValidation";
 
-const colorMap = {
-  red: "#ff3b30",
-  blue: "#007aff",
-  yellow: "#ffcc00",
-  null: "#d1d1d6",
-};
+const UNCOLORED_VERTEX_COLOR = "#d1d1d6";
 
 function getVertexRadius(vertexCount) {
   if (vertexCount <= 8) return 34;
@@ -24,7 +20,10 @@ function GraphCanvas({
   activeVertexId = null,
   onVertexHover,
   onVertexLeave,
+  colorTheme = getThemeById(DEFAULT_THEME_ID),
 }) {
+  const activeTheme = colorTheme ?? getThemeById(DEFAULT_THEME_ID);
+
   const conflictKeys = new Set(
     conflicts.map(([a, b]) => getEdgeKey(a, b))
   );
@@ -126,7 +125,11 @@ function GraphCanvas({
                 cx={vertex.x}
                 cy={vertex.y}
                 r={vertexRadius}
-                fill={colorMap[vertex.color]}
+                fill={
+                  vertex.color === null
+                    ? UNCOLORED_VERTEX_COLOR
+                    : activeTheme.colors[vertex.color] ?? UNCOLORED_VERTEX_COLOR
+                }
               />
 
               <text

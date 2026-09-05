@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { generateRandomGraph } from "../utils/randomGraph";
+import ColorThemePicker from "./ColorThemePicker";
+import { DEFAULT_THEME_ID, getThemeById } from "../data/colorThemes";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 
