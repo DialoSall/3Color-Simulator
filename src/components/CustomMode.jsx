@@ -4,7 +4,7 @@ import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { generateRandomGraph } from "../utils/randomGraph";
 import ColorThemePicker from "./ColorThemePicker";
-import { DEFAULT_THEME_ID, getThemeById } from "../data/colorThemes";
+import { useColorTheme } from "../hooks/useColorTheme";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 
@@ -28,6 +28,13 @@ function CustomMode() {
   const [recolors, setRecolors] = useState(0);
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
   const [lastVertexId, setLastVertexId] = useState(null);
+  const {
+    selectedThemeId,
+    setSelectedThemeId,
+    customTheme,
+    setCustomTheme,
+    activeTheme,
+  } = useColorTheme();
 
   const conflicts = useMemo(() => {
     return getConflicts(currentGraph.vertices, currentGraph.edges);
@@ -142,12 +149,13 @@ function handleVertexClick(vertexId) {
           </div>
 
             <GraphCanvas
-                vertices={currentGraph.vertices}
-                edges={currentGraph.edges}
-                conflicts={conflicts}
-                onVertexClick={handleVertexClick}
-                width={currentGraph.width}
-                height={currentGraph.height}
+              vertices={currentGraph.vertices}
+              edges={currentGraph.edges}
+              conflicts={conflicts}
+              onVertexClick={handleVertexClick}
+              width={currentGraph.width}
+              height={currentGraph.height}
+              colorTheme={activeTheme}
             />
         </div>
 
@@ -230,6 +238,14 @@ function handleVertexClick(vertexId) {
           </div>
 
           <button onClick={handleResetColors}>Reset Colors</button>
+
+          <ColorThemePicker
+            selectedThemeId={selectedThemeId}
+            onThemeChange={setSelectedThemeId}
+            activeTheme={activeTheme}
+            customTheme={customTheme}
+            onCustomThemeChange={setCustomTheme}
+          />
 
           <div className="rules">
             <h3>Note</h3>

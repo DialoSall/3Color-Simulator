@@ -4,7 +4,7 @@ import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { getDailyPuzzle } from "../data/dailyPuzzles";
 import ColorThemePicker from "./ColorThemePicker";
-import { DEFAULT_THEME_ID, getThemeById } from "../data/colorThemes";
+import { useColorTheme } from "../hooks/useColorTheme";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const DAILY_COMPLETIONS_KEY = "3color-daily-completions";
@@ -114,6 +114,14 @@ function DailyMode() {
   const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
+
+  const {
+    selectedThemeId,
+    setSelectedThemeId,
+    customTheme,
+    setCustomTheme,
+    activeTheme,
+  } = useColorTheme();
 
   const conflicts = useMemo(() => {
     return getConflicts(currentPuzzle.vertices, currentPuzzle.edges);
@@ -402,7 +410,8 @@ function DailyMode() {
             activeVertexId={hoveredVertexId}
             onVertexHover={setHoveredVertexId}
             onVertexLeave={() => setHoveredVertexId(null)}
-          />
+            colorTheme={activeTheme}
+           />
         </div>
 
         {!solved && (
@@ -423,13 +432,21 @@ function DailyMode() {
 
             <button onClick={handleResetColors}>Reset Puzzle</button>
 
-            <div className="rules">
-              <h3>Rules</h3>
+            <ColorThemePicker
+                selectedThemeId={selectedThemeId}
+                onThemeChange={setSelectedThemeId}
+                activeTheme={activeTheme}
+                customTheme={customTheme}
+                onCustomThemeChange={setCustomTheme}
+            />
 
-              <p>
-                Color every circle. Circles connected by a line cannot share
-                the same color.
-              </p>
+            <div className="rules">
+                <h3>Rules</h3>
+
+                <p>
+                    Color every circle. Circles connected by a line cannot share
+                    the same color.
+                </p>
             </div>
           </aside>
         )}

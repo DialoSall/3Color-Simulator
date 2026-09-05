@@ -4,12 +4,10 @@ import { levels } from "../data/levels";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import ColorThemePicker from "./ColorThemePicker";
-import { DEFAULT_THEME_ID, getThemeById } from "../data/colorThemes";
+import { useColorTheme } from "../hooks/useColorTheme";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const PROGRESS_KEY = "3color-highest-completed-level";
-const THEME_ID_KEY = "3color-theme-id";
-const CUSTOM_THEME_KEY = "3color-custom-theme";
 
 function cloneLevel(level) {
   return {
@@ -64,41 +62,6 @@ function getLevelIndexFromParam(levelId) {
   return parsedLevelId - 1;
 }
 
-function getSavedCustomTheme() {
-  if (typeof window === "undefined") {
-    return {
-      id: "custom",
-      name: "Custom",
-      colors: {
-        red: "#ff3b30",
-        blue: "#007aff",
-        yellow: "#ffcc00",
-      },
-    };
-  }
-
-  try {
-    const savedCustomTheme = window.localStorage.getItem(CUSTOM_THEME_KEY);
-
-    if (!savedCustomTheme) {
-      throw new Error("No custom theme saved.");
-    }
-
-    return JSON.parse(savedCustomTheme);
-  } catch {
-    return {
-      id: "custom",
-      name: "Custom",
-      colors: {
-        red: "#ff3b30",
-        blue: "#007aff",
-        yellow: "#ffcc00",
-        empty: "#d1d1d6",
-      },
-    };
-  }
-}
-
 function LevelMode() {
   const navigate = useNavigate();
   const { levelId } = useParams();
@@ -126,15 +89,13 @@ function LevelMode() {
   const [hoveredVertexId, setHoveredVertexId] = useState(null);
   const elapsedMillisecondsRef = useRef(0);
 
-  const [selectedThemeId, setSelectedThemeId] = useState(() => {
-    if (typeof window === "undefined") {
-      return DEFAULT_THEME_ID;
-    }
-
-    return window.localStorage.getItem(THEME_ID_KEY) ?? DEFAULT_THEME_ID;
-  });
-
-  const [customTheme, setCustomTheme] = useState(getSavedCustomTheme);
+  const {
+    selectedThemeId,
+    setSelectedThemeId,
+    customTheme,
+    setCustomTheme,
+    activeTheme,
+  } = useColorTheme();
   
 
   const conflicts = useMemo(() => {
@@ -147,9 +108,6 @@ function LevelMode() {
 
   const activeVertexId = hoveredVertexId;
 
-  const activeTheme =
-    selectedThemeId === "custom" ? customTheme : getThemeById(selectedThemeId);
-
   const graphSectionRef = useRef(null);
   const completionCardRef = useRef(null);
 
@@ -157,22 +115,6 @@ function LevelMode() {
   useEffect(() => {
     elapsedMillisecondsRef.current = elapsedMilliseconds;
   }, [elapsedMilliseconds]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(THEME_ID_KEY, selectedThemeId);
-  }, [selectedThemeId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(customTheme));
-  }, [customTheme]);
 
   useEffect(() => {
     if (!timerRunning || solved) {
