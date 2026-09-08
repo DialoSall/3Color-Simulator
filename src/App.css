@@ -432,12 +432,78 @@ select {
 }
 
 .graphCanvasWrap {
+  position: relative;
   width: 100%;
   background:
     radial-gradient(circle at top right, rgba(0, 113, 227, 0.12), transparent 34%),
     #f5f5f7;
   border-radius: 28px;
   overflow: hidden;
+}
+
+.graphToolbar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+
+.soundToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #1d1d1f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+}
+
+.soundToggle:hover {
+  background: rgba(255, 255, 255, 0.94);
+  transform: translateY(-1px);
+}
+
+.soundToggleIcon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1d1d1f;
+  color: white;
+  font-size: 0.78rem;
+}
+
+.soundToggle.muted {
+  color: #6e6e73;
+}
+
+.soundToggle.muted .soundToggleIcon {
+  background: #8e8e93;
+}
+
+@media (max-width: 600px) {
+  .graphToolbar {
+    top: 10px;
+    right: 10px;
+  }
+
+  .soundToggle {
+    padding: 8px;
+  }
+
+  .soundToggleText {
+    display: none;
+  }
 }
 
 .graphCanvas {

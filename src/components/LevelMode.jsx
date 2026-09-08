@@ -5,6 +5,8 @@ import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import ColorThemePicker from "./ColorThemePicker";
 import { useColorTheme } from "../hooks/useColorTheme";
+import SoundToggle from "./SoundToggle";
+import { useSoundEffects } from "../hooks/useSoundEffects";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const PROGRESS_KEY = "3color-highest-completed-level";
@@ -96,6 +98,8 @@ function LevelMode() {
     setCustomTheme,
     activeTheme,
   } = useColorTheme();
+
+  const { soundEnabled, setSoundEnabled, playSound } = useSoundEffects();
   
 
   const conflicts = useMemo(() => {
@@ -110,6 +114,7 @@ function LevelMode() {
 
   const graphSectionRef = useRef(null);
   const completionCardRef = useRef(null);
+  const completionSoundPlayedRef = useRef(false);
 
 
   useEffect(() => {
@@ -173,6 +178,7 @@ function LevelMode() {
     setTimerRunning(false);
     setResets(0);
     setHoveredVertexId(null);
+    completionSoundPlayedRef.current = false;
   }, [levelId, highestUnlocked, levelIndex, navigate]);
 
   useEffect(() => {
@@ -193,6 +199,20 @@ function LevelMode() {
       return nextHighest;
     });
   }, [solved, levelIndex]);
+
+  useEffect(() => {
+    if (!solved) {
+      completionSoundPlayedRef.current = false;
+      return;
+    }
+
+    if (completionSoundPlayedRef.current) {
+      return;
+    }
+
+    completionSoundPlayedRef.current = true;
+    playSound("complete");
+  }, [solved, playSound]);
 
   useEffect(() => {
     if (!solved || typeof window === "undefined") {
@@ -233,6 +253,8 @@ function LevelMode() {
       return;
     }
 
+    playSound("level");
+
     navigate(`/levels/${levels[nextIndex].id}`);
 
     setLevelIndex(nextIndex);
@@ -252,9 +274,12 @@ function LevelMode() {
   }
 
   function handleVertexClick(vertexId) {
+    playSound("vertex");
+
     if (!timerRunning && !solved) {
       setTimerRunning(true);
     }
+
     const hasVisitedBefore = visitedVertices.has(vertexId);
 
     const isReturningToVertex =
@@ -274,31 +299,42 @@ function LevelMode() {
 
     setLastVertexId(vertexId);
 
-    setCurrentLevel((previousLevel) => {
-      const updatedVertices = previousLevel.vertices.map((vertex) => {
-        if (vertex.id !== vertexId) {
-          return vertex;
-        }
+    const previousConflictCount = conflicts.length;
 
-        const currentColorIndex = colorCycle.indexOf(vertex.color);
+    const updatedVertices = currentLevel.vertices.map((vertex) => {
+      if (vertex.id !== vertexId) {
+        return vertex;
+      }
 
-        const nextColor =
-          colorCycle[(currentColorIndex + 1) % colorCycle.length];
+      const currentColorIndex = colorCycle.indexOf(vertex.color);
 
-        return {
-          ...vertex,
-          color: nextColor,
-        };
-      });
+      const nextColor =
+        colorCycle[(currentColorIndex + 1) % colorCycle.length];
 
       return {
-        ...previousLevel,
-        vertices: updatedVertices,
+        ...vertex,
+        color: nextColor,
       };
     });
+
+    const nextConflictCount = getConflicts(
+      updatedVertices,
+      currentLevel.edges
+    ).length;
+
+    setCurrentLevel({
+      ...currentLevel,
+      vertices: updatedVertices,
+    });
+
+    if (nextConflictCount > previousConflictCount) {
+      playSound("conflict");
+    }
   }
 
   function handleReset() {
+    playSound("reset");
+
     setCurrentLevel(cloneLevel(levels[levelIndex]));
 
     setRecolors(0);
@@ -310,6 +346,8 @@ function LevelMode() {
   }
 
   function handleReplayLevel() {
+    playSound("reset");
+    
     setCurrentLevel(cloneLevel(levels[levelIndex]));
     setRecolors(0);
     setVisitedVertices(new Set());
@@ -318,6 +356,7 @@ function LevelMode() {
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
+    completionSoundPlayedRef.current = false;
   }
 
   function handlePreviousLevel() {
@@ -516,6 +555,13 @@ function LevelMode() {
                 onVertexHover={setHoveredVertexId}
                 onVertexLeave={() => setHoveredVertexId(null)}
                 colorTheme={activeTheme}
+                toolbar={
+                  <SoundToggle
+                    soundEnabled={soundEnabled}
+                    onSoundEnabledChange={setSoundEnabled}
+                    onPreviewSound={() => playSound("button", { force: true })}
+                  />
+                }
               />
 
 

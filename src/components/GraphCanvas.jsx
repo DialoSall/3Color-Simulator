@@ -21,6 +21,7 @@ function GraphCanvas({
   onVertexHover,
   onVertexLeave,
   colorTheme = getThemeById(DEFAULT_THEME_ID),
+  toolbar = null,
 }) {
   const activeTheme = colorTheme ?? getThemeById(DEFAULT_THEME_ID);
 
@@ -50,6 +51,8 @@ function GraphCanvas({
 
   return (
     <div className="graphCanvasWrap">
+      {toolbar && <div className="graphToolbar">{toolbar}</div>}
+      
       <svg
         className="graphCanvas"
         viewBox={`0 0 ${width} ${height}`}
