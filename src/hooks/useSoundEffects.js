@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const SOUND_ENABLED_KEY = "3color-sound-enabled";
+const MASTER_VOLUME = 3;
+const MAX_VOLUME = 0.18;
 
 function getSavedSoundEnabled() {
   if (typeof window === "undefined") {
@@ -51,7 +53,7 @@ export function useSoundEffects() {
       frequency,
       duration = 0.08,
       type = "sine",
-      volume = 0.035,
+      volume = 0.05,
       startOffset = 0,
     }) => {
       const audioContext = getAudioContext();
@@ -69,12 +71,13 @@ export function useSoundEffects() {
 
       const startTime = audioContext.currentTime + startOffset;
       const endTime = startTime + duration;
+      const effectiveVolume = Math.min(volume * MASTER_VOLUME, MAX_VOLUME);
 
       oscillator.type = type;
       oscillator.frequency.setValueAtTime(frequency, startTime);
 
       gain.gain.setValueAtTime(0.0001, startTime);
-      gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(effectiveVolume, startTime + 0.015);
       gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
       oscillator.connect(gain);
@@ -98,7 +101,7 @@ export function useSoundEffects() {
         playTone({
           frequency: 440,
           duration: 0.07,
-          volume: 0.025,
+          volume: 0.04,
         });
         return;
       }
@@ -107,7 +110,7 @@ export function useSoundEffects() {
         playTone({
           frequency: 360,
           duration: 0.06,
-          volume: 0.022,
+          volume: 0.04,
         });
         return;
       }
@@ -117,14 +120,14 @@ export function useSoundEffects() {
           frequency: 220,
           duration: 0.08,
           type: "triangle",
-          volume: 0.025,
+          volume: 0.04,
         });
 
         playTone({
           frequency: 180,
           duration: 0.08,
           type: "triangle",
-          volume: 0.018,
+          volume: 0.04,
           startOffset: 0.06,
         });
 
@@ -135,13 +138,13 @@ export function useSoundEffects() {
         playTone({
           frequency: 330,
           duration: 0.08,
-          volume: 0.025,
+          volume: 0.04,
         });
 
         playTone({
           frequency: 260,
           duration: 0.08,
-          volume: 0.02,
+          volume: 0.04,
           startOffset: 0.07,
         });
 
@@ -152,13 +155,13 @@ export function useSoundEffects() {
         playTone({
           frequency: 440,
           duration: 0.07,
-          volume: 0.024,
+          volume: 0.04,
         });
 
         playTone({
           frequency: 554,
           duration: 0.08,
-          volume: 0.022,
+          volume: 0.04,
           startOffset: 0.07,
         });
 
@@ -169,20 +172,20 @@ export function useSoundEffects() {
         playTone({
           frequency: 523,
           duration: 0.09,
-          volume: 0.03,
+          volume: 0.04,
         });
 
         playTone({
           frequency: 659,
           duration: 0.09,
-          volume: 0.028,
+          volume: 0.04,
           startOffset: 0.08,
         });
 
         playTone({
           frequency: 784,
           duration: 0.12,
-          volume: 0.026,
+          volume: 0.04,
           startOffset: 0.16,
         });
       }
