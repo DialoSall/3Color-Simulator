@@ -100,8 +100,6 @@ function HomeScreen() {
             >
               Start Challenge
             </button>
-            <InstallPrompt />
-            
 
             <button
               className="secondaryHomeButton"
@@ -109,7 +107,6 @@ function HomeScreen() {
             >
               Today's Puzzle
             </button>
-            <InstallPrompt />
 
             <button className="shareHomeButton" onClick={handleShare}>
               Share 3Color
@@ -121,9 +118,9 @@ function HomeScreen() {
             >
               Generate Random Puzzle
             </button>
-            <InstallPrompt />
             
           </div>
+          <InstallPrompt />
 
           {shareMessage && (
             <p className="shareMessage">{shareMessage}</p>

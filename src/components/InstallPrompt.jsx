@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 
 const DISMISSED_UNTIL_KEY = "3color-install-prompt-dismissed-until";
 const INSTALLED_KEY = "3color-installed";
-const SNOOZE_DAYS = 14;
+const SNOOZE_DAYS = 30;
 
 function isStandaloneApp() {
-  if (typeof window === "undefined") {
-    return false;
-  }
+  if (typeof window === "undefined") return false;
 
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -15,10 +13,14 @@ function isStandaloneApp() {
   );
 }
 
+function isMobileDevice() {
+  if (typeof window === "undefined") return false;
+
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
 function isIOSDevice() {
-  if (typeof window === "undefined") {
-    return false;
-  }
+  if (typeof window === "undefined") return false;
 
   const userAgent = window.navigator.userAgent.toLowerCase();
 
@@ -30,9 +32,7 @@ function isIOSDevice() {
 }
 
 function isDismissed() {
-  if (typeof window === "undefined") {
-    return true;
-  }
+  if (typeof window === "undefined") return true;
 
   const dismissedUntil = Number(
     window.localStorage.getItem(DISMISSED_UNTIL_KEY)
@@ -42,9 +42,7 @@ function isDismissed() {
 }
 
 function snoozePrompt() {
-  const dismissedUntil =
-    Date.now() + SNOOZE_DAYS * 24 * 60 * 60 * 1000;
-
+  const dismissedUntil = Date.now() + SNOOZE_DAYS * 24 * 60 * 60 * 1000;
   window.localStorage.setItem(DISMISSED_UNTIL_KEY, String(dismissedUntil));
 }
 
@@ -55,17 +53,12 @@ function InstallPrompt() {
   const isIOS = useMemo(() => isIOSDevice(), []);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    if (
-      isStandaloneApp() ||
-      isDismissed() ||
-      window.localStorage.getItem(INSTALLED_KEY) === "true"
-    ) {
-      return;
-    }
+    if (!isMobileDevice()) return;
+    if (isStandaloneApp()) return;
+    if (isDismissed()) return;
+    if (window.localStorage.getItem(INSTALLED_KEY) === "true") return;
 
     if (isIOSDevice()) {
       const timerId = window.setTimeout(() => {
@@ -100,9 +93,7 @@ function InstallPrompt() {
   }, []);
 
   async function handleInstallClick() {
-    if (!deferredPrompt) {
-      return;
-    }
+    if (!deferredPrompt) return;
 
     deferredPrompt.prompt();
 
@@ -124,9 +115,7 @@ function InstallPrompt() {
     setShowPrompt(false);
   }
 
-  if (!showPrompt) {
-    return null;
-  }
+  if (!showPrompt) return null;
 
   return (
     <section className="installPrompt">
@@ -146,12 +135,11 @@ function InstallPrompt() {
 
         {isIOS ? (
           <p>
-            On iPhone, tap the Share button in Safari, then choose Add to Home
-            Screen.
+            Tap the Share button in Safari, then choose Add to Home Screen.
           </p>
         ) : (
           <p>
-            Install 3Color so it opens from your device like a small puzzle app.
+            Install 3Color so it opens from your Home Screen like an app.
           </p>
         )}
       </div>
