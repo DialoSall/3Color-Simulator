@@ -135,7 +135,7 @@ function InstallPrompt() {
 
         {isIOS ? (
           <p>
-            Tap the Share button in Safari, then choose Add to Home Screen.
+            Tap the Share button in Safari, then tap More or scroll down and choose Add to Home Screen.
           </p>
         ) : (
           <p>
