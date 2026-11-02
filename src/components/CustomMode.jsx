@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { generateRandomGraph } from "../utils/randomGraph";
+import { createPuzzleUrl, readSharedPuzzle } from "../utils/graphSharing";
 import ColorThemePicker from "./ColorThemePicker";
 import { useColorTheme } from "../hooks/useColorTheme";
 
@@ -20,11 +21,22 @@ function resetGraphColors(graph) {
 
 function CustomMode() {
   const navigate = useNavigate();
-  const [vertexCountInput, setVertexCountInput] = useState("8");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const seed = searchParams.get("seed");
+  const sharedPuzzle = useMemo(
+    () => readSharedPuzzle(seed === null ? "" : new URLSearchParams({ seed }).toString()),
+    [seed]
+  );
+  const [vertexCountInput, setVertexCountInput] = useState(() =>
+    String(sharedPuzzle.graph?.vertices.length ?? 8)
+  );
   const [edgeProbability, setEdgeProbability] = useState(0.25);
   const [currentGraph, setCurrentGraph] = useState(() =>
-    generateRandomGraph(8, 0.25)
+    sharedPuzzle.graph ?? generateRandomGraph(8, 0.25)
   );
+  const [linkMessage, setLinkMessage] = useState(sharedPuzzle.error);
+  const [shareMessage, setShareMessage] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
   const [recolors, setRecolors] = useState(0);
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
   const [lastVertexId, setLastVertexId] = useState(null);
@@ -35,6 +47,20 @@ function CustomMode() {
     setCustomTheme,
     activeTheme,
   } = useColorTheme();
+
+  // Also load links reached through browser navigation while this mode is open.
+  useEffect(() => {
+    if (seed === null) return;
+    const graph = sharedPuzzle.graph ?? generateRandomGraph(8, 0.25);
+    setCurrentGraph(graph);
+    setVertexCountInput(String(graph.vertices.length));
+    setLinkMessage(sharedPuzzle.error);
+    setShareMessage("");
+    setShareUrl("");
+    setRecolors(0);
+    setVisitedVertices(new Set());
+    setLastVertexId(null);
+  }, [seed, sharedPuzzle]);
 
   const conflicts = useMemo(() => {
     return getConflicts(currentGraph.vertices, currentGraph.edges);
@@ -48,7 +74,7 @@ function handleGenerateGraph() {
   const parsedVertexCount = Number(vertexCountInput);
 
   if (
-    Number.isNaN(parsedVertexCount) ||
+    !Number.isInteger(parsedVertexCount) ||
     parsedVertexCount < 3 ||
     parsedVertexCount > 24
   ) {
@@ -64,6 +90,27 @@ function handleGenerateGraph() {
   setRecolors(0);
   setVisitedVertices(new Set());
   setLastVertexId(null);
+  setLinkMessage("");
+  setShareMessage("");
+  setShareUrl("");
+
+  // A newly generated graph must not keep the previous puzzle's seed on reload.
+  if (searchParams.has("seed")) {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("seed");
+    setSearchParams(nextParams, { replace: true });
+  }
+}
+
+async function handleSharePuzzle() {
+  const url = createPuzzleUrl(currentGraph, window.location.href);
+  setShareUrl(url);
+  try {
+    await navigator.clipboard.writeText(url);
+    setShareMessage("Puzzle link copied! Your friend starts with uncolored circles.");
+  } catch {
+    setShareMessage("Copy the puzzle link below to share it.");
+  }
 }
 
 function handleResetColors() {
@@ -138,6 +185,8 @@ function handleVertexClick(vertexId) {
         </p>
       </section>
 
+      {linkMessage && <p role="status">{linkMessage}</p>}
+
       <section className="customLayout">
         <div className="gamePanel">
           <div className="levelHeader">
@@ -205,6 +254,21 @@ function handleVertexClick(vertexId) {
           </div>
 
           <button onClick={handleGenerateGraph}>Generate Graph</button>
+
+          <button onClick={handleSharePuzzle}>Share Puzzle</button>
+          <p role="status">{shareMessage}</p>
+          {shareUrl && (
+            <div className="formGroup">
+              <label htmlFor="puzzleShareUrl">Puzzle link</label>
+              <input
+                id="puzzleShareUrl"
+                type="text"
+                readOnly
+                value={shareUrl}
+                onFocus={(event) => event.target.select()}
+              />
+            </div>
+          )}
 
           <div className={solved ? "statusBox solved" : "statusBox"}>
             <h3>{solved ? "Solved!" : "Custom Puzzle"}</h3>
