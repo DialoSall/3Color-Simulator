@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test:sharing": "node --test scripts/puzzleSharing.test.js",
     "validate:levels": "node scripts/validateLevels.js"
   },
   "dependencies": {

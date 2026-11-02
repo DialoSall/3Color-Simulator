@@ -81,12 +81,32 @@ npm run dev -- --host 0.0.0.0
 
 Then open the network URL shown in the terminal on your phone.
 
+## Sharing a Puzzle
+
+In **Generate Random Puzzle**, select **Share Puzzle** to copy a link for the
+current graph. If clipboard access is unavailable, select and copy the displayed
+link. Opening it loads the same node coordinates, connections, and canvas size,
+with all circles uncolored and progress reset. No database or account is needed.
+
+Links use `/custom?seed=…`; `/?seed=…` also opens the shared puzzle. Invalid or
+unsupported links show a message and fall back to a random puzzle. Generating a
+new graph clears the old seed from the address bar.
+
+`src/utils/graphSharing.js` exports `serializeGraph(graph)`,
+`deserializeGraph(seed)`, `createPuzzleUrl(graph, baseUrl)`, and
+`readSharedPuzzle(search)`. The versioned binary format supports 3–24 vertices,
+unique integer IDs from 0–65535, and coordinates within a positive canvas no larger
+than 10,000 per dimension. It preserves floating-point coordinates exactly and
+stores undirected connections as bits, yielding URL-safe seeds of 98–647 characters.
+Puzzle colors, names, themes, and play progress are not encoded.
+
+Run the sharing checks with `npm run test:sharing`.
+
 ## Future Improvements
 
 * Daily puzzles
 * Shareable completion results
 * More campaign levels
-* User-created puzzle sharing
 * Improved challenge tracking
 * Optional leaderboard or community puzzle system
 
