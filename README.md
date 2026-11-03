@@ -102,6 +102,25 @@ Puzzle colors, names, themes, and play progress are not encoded.
 
 Run the sharing checks with `npm run test:sharing`.
 
+## Appearance and Dense Graphs
+
+- Choose **Light**, **Dark**, or **System** in the header. The choice is saved on
+  this device; System follows changes to the device's appearance. Puzzle color
+  themes and saved progress are independent of this setting.
+- Hover over a circle on desktop, or press and hold on a touchscreen, to trace its
+  connections. Other edges fade and connected circles are outlined. Releasing a
+  hold does not color the circle or affect the timer/recolor count. Moving your
+  finger cancels the hold so you can scroll normally.
+- Focus a circle with the keyboard to trace connections; Enter or Space cycles
+  its color.
+- Use **+** and **−** to zoom in 10% steps from the fitted graph size, scroll inside the canvas to explore, and select
+  **Fit** to restore the whole graph. **Expand** opens the puzzle in full screen
+  on supported browsers; Exit or Escape returns to the page. Completing a puzzle
+  also returns to its completion card.
+- The campaign level picker and puzzle color/sound settings are collapsed while
+  playing. Open **Choose a level**, **Puzzle colors**, or **Colors & sound** when
+  needed. Puzzle coordinates, connections, and unlock rules are unchanged.
+
 ## Future Improvements
 
 * Daily puzzles

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { generateRandomGraph } from "../utils/randomGraph";
 import { createPuzzleUrl, readSharedPuzzle } from "../utils/graphSharing";
-import ColorThemePicker from "./ColorThemePicker";
+import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 
 const colorCycle = [null, "red", "blue", "yellow"];
@@ -20,7 +20,6 @@ function resetGraphColors(graph) {
 }
 
 function CustomMode() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const seed = searchParams.get("seed");
   const sharedPuzzle = useMemo(
@@ -170,20 +169,14 @@ function handleVertexClick(vertexId) {
 }
 
   return (
-    <main className="app">
-      <button className="backButton" onClick={() => navigate("/")}>
-        ← Back Home
-      </button>
-
-      <section className="hero">
-        <p className="eyebrow">Custom Graph</p>
-        <h1>Random Graph</h1>
-
-        <p className="heroText">
-          Generate a random graph by choosing the number of vertices and the
-          probability that an edge exists between each pair of vertices.
-        </p>
-      </section>
+    <main className="app gameApp">
+      <header className="gameHeading">
+        <div>
+          <p className="eyebrow">Custom Graph</p>
+          <h1>{sharedPuzzle.graph ? "A shared challenge" : "Make it your own"}</h1>
+        </div>
+        <p>Connected circles must have different colors.</p>
+      </header>
 
       {linkMessage && <p role="status">{linkMessage}</p>}
 
@@ -198,6 +191,7 @@ function handleVertexClick(vertexId) {
           </div>
 
             <GraphCanvas
+              key={`${currentGraph.id}-${seed}`}
               vertices={currentGraph.vertices}
               edges={currentGraph.edges}
               conflicts={conflicts}
@@ -208,8 +202,10 @@ function handleVertexClick(vertexId) {
             />
         </div>
 
-        <aside className="statusPanel">
-          <p className="eyebrow">Generator</p>
+        <aside className="statusPanel customControls">
+          <details className="generatorSettings">
+            <summary>Generate another puzzle</summary>
+            <div className="generatorFields">
 
           <div className="formGroup">
             <label htmlFor="vertexCount">Vertices</label>
@@ -254,6 +250,8 @@ function handleVertexClick(vertexId) {
           </div>
 
           <button onClick={handleGenerateGraph}>Generate Graph</button>
+            </div>
+          </details>
 
           <button onClick={handleSharePuzzle}>Share Puzzle</button>
           <p role="status">{shareMessage}</p>
@@ -303,7 +301,7 @@ function handleVertexClick(vertexId) {
 
           <button onClick={handleResetColors}>Reset Colors</button>
 
-          <ColorThemePicker
+          <GameSettings
             selectedThemeId={selectedThemeId}
             onThemeChange={setSelectedThemeId}
             activeTheme={activeTheme}
@@ -311,13 +309,13 @@ function handleVertexClick(vertexId) {
             onCustomThemeChange={setCustomTheme}
           />
 
-          <div className="rules">
-            <h3>Note</h3>
+          <details className="generatorNote">
+            <summary>About random graphs</summary>
             <p>
               Higher edge probability creates denser graphs. Dense graphs are
               usually harder to color and may be impossible to 3-color.
             </p>
-          </div>
+          </details>
         </aside>
       </section>
     </main>

@@ -4,6 +4,7 @@ import LevelMode from "./components/LevelMode";
 import CustomMode from "./components/CustomMode";
 import DailyMode from "./components/DailyMode";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import AppHeader from "./components/AppHeader";
 
 function App() {
   const location = useLocation();
@@ -12,6 +13,7 @@ function App() {
   return (
     <>
       <AnalyticsTracker />
+      <AppHeader />
 
       {hasSeed && location.pathname !== "/custom" ? (
         <Navigate

@@ -1,13 +1,25 @@
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { getThemeById, DEFAULT_THEME_ID } from "../data/colorThemes";
 import { getEdgeKey } from "../utils/graphValidation";
 
-const UNCOLORED_VERTEX_COLOR = "#d1d1d6";
+const HOLD_DELAY = 350;
+const MOVE_TOLERANCE = 12;
 
 function getVertexRadius(vertexCount) {
   if (vertexCount <= 8) return 34;
   if (vertexCount <= 12) return 30;
   if (vertexCount <= 16) return 26;
   return 25;
+}
+
+function labelColor(hex) {
+  const channels = hex.replace("#", "").match(/.{2}/g);
+  if (channels?.length !== 3) return "#16181d";
+  const [r, g, b] = channels.map((channel) => {
+    const value = parseInt(channel, 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? "#16181d" : "#ffffff";
 }
 
 function GraphCanvas({
@@ -17,129 +29,236 @@ function GraphCanvas({
   onVertexClick,
   width = 600,
   height = 480,
-  activeVertexId = null,
-  onVertexHover,
-  onVertexLeave,
   colorTheme = getThemeById(DEFAULT_THEME_ID),
   toolbar = null,
 }) {
   const activeTheme = colorTheme ?? getThemeById(DEFAULT_THEME_ID);
+  const [hoveredId, setHoveredId] = useState(null);
+  const [focusedId, setFocusedId] = useState(null);
+  const [heldId, setHeldId] = useState(null);
+  const [zoom, setZoom] = useState(100);
+  const [fitSize, setFitSize] = useState(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [displayMessage, setDisplayMessage] = useState("");
+  const canvas = useRef(null);
+  const viewport = useRef(null);
+  const zoomAnchor = useRef(null);
+  const holdTimer = useRef(null);
+  const pointer = useRef(null);
+  const suppressClick = useRef(false);
+  const hintId = useId();
+  const solved = vertices.every((vertex) => vertex.color !== null) && conflicts.length === 0;
 
-  const conflictKeys = new Set(
-    conflicts.map(([a, b]) => getEdgeKey(a, b))
-  );
+  useLayoutEffect(() => {
+    const element = viewport.current;
+    const measure = () => {
+      const availableWidth = element.getBoundingClientRect().width;
+      const maxHeight = parseFloat(getComputedStyle(element).maxHeight);
+      const availableHeight = document.fullscreenElement === canvas.current
+        ? element.clientHeight
+        : Number.isFinite(maxHeight) ? maxHeight : window.innerHeight;
+      if (!availableWidth || !availableHeight) return;
+      const scale = Math.min(availableWidth / width, availableHeight / height);
+      const next = { width: width * scale, height: height * scale, viewportWidth: availableWidth };
+      setFitSize((previous) => previous &&
+        Math.abs(previous.width - next.width) < 0.5 &&
+        Math.abs(previous.height - next.height) < 0.5 &&
+        Math.abs(previous.viewportWidth - next.viewportWidth) < 0.5 ? previous : next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [width, height, fullscreen]);
 
-  const vertexRadius = getVertexRadius(vertices.length);
+  useLayoutEffect(() => {
+    const anchor = zoomAnchor.current;
+    if (!anchor || !fitSize) return;
+    const element = viewport.current;
+    const scale = zoom / 100;
+    const leftPadding = Math.max(0, (fitSize.viewportWidth - fitSize.width * scale) / 2);
+    element.scrollTo({
+      left: anchor.x * scale + leftPadding - element.clientWidth / 2,
+      top: anchor.y * scale - element.clientHeight / 2,
+      behavior: "instant",
+    });
+    zoomAnchor.current = null;
+  }, [zoom, fitSize]);
 
-  const getVertexById = (id) => {
-    return vertices.find((vertex) => vertex.id === id);
-  };
+  function changeZoom(step) {
+    const element = viewport.current;
+    if (fitSize) {
+      const scale = zoom / 100;
+      const leftPadding = Math.max(0, (fitSize.viewportWidth - fitSize.width * scale) / 2);
+      zoomAnchor.current = {
+        x: (element.scrollLeft + element.clientWidth / 2 - leftPadding) / scale,
+        y: (element.scrollTop + element.clientHeight / 2) / scale,
+      };
+    }
+    setZoom((value) => Math.max(100, Math.min(300, value + step)));
+  }
 
+  useEffect(() => () => window.clearTimeout(holdTimer.current), []);
+  useEffect(() => {
+    const handleFullscreen = () => setFullscreen(document.fullscreenElement === canvas.current);
+    document.addEventListener("fullscreenchange", handleFullscreen);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreen);
+  }, []);
+  useEffect(() => {
+    // Return to the completion card when the last circle is colored in full screen.
+    if (solved && document.fullscreenElement === canvas.current) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, [solved]);
+
+  const candidateId = heldId ?? hoveredId ?? focusedId;
+  const activeId = vertices.some((vertex) => vertex.id === candidateId) ? candidateId : null;
+  const hasActiveVertex = activeId !== null;
+  const conflictKeys = new Set(conflicts.map(([a, b]) => getEdgeKey(a, b)));
   const activeEdgeKeys = new Set();
   const adjacentVertexIds = new Set();
+  const verticesById = new Map(vertices.map((vertex) => [vertex.id, vertex]));
+  const vertexRadius = getVertexRadius(vertices.length);
 
-  if (activeVertexId !== null) {
-    for (const [a, b] of edges) {
-      if (a === activeVertexId || b === activeVertexId) {
-        activeEdgeKeys.add(getEdgeKey(a, b));
-        adjacentVertexIds.add(a === activeVertexId ? b : a);
-      }
+  for (const [a, b] of edges) {
+    if (hasActiveVertex && (a === activeId || b === activeId)) {
+      activeEdgeKeys.add(getEdgeKey(a, b));
+      adjacentVertexIds.add(a === activeId ? b : a);
     }
   }
 
-  const hasActiveVertex = activeVertexId !== null;
+  // Draw the connections being traced last, so other edges cannot cover them.
+  const orderedEdges = [...edges].sort((a, b) =>
+    Number(activeEdgeKeys.has(getEdgeKey(...a))) - Number(activeEdgeKeys.has(getEdgeKey(...b)))
+  );
+
+  function clearHold() {
+    window.clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+    pointer.current = null;
+    setHeldId(null);
+  }
+
+  function handlePointerDown(event, vertexId) {
+    suppressClick.current = false;
+    setFocusedId(null);
+    if (event.pointerType === "mouse" || event.isPrimary === false) return;
+    clearHold();
+    pointer.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    holdTimer.current = window.setTimeout(() => {
+      suppressClick.current = true;
+      setHeldId(vertexId);
+    }, HOLD_DELAY);
+  }
+
+  function handlePointerMove(event) {
+    if (!pointer.current || event.pointerId !== pointer.current.id) return;
+    if (Math.hypot(event.clientX - pointer.current.x, event.clientY - pointer.current.y) > MOVE_TOLERANCE) {
+      suppressClick.current = true;
+      clearHold();
+    }
+  }
 
   return (
-    <div className="graphCanvasWrap">
+    <div ref={canvas} className={`graphCanvasWrap ${hasActiveVertex ? "isTracing" : ""}`}>
       {toolbar && <div className="graphToolbar">{toolbar}</div>}
-      
+      <div className="graphViewport" ref={viewport} tabIndex={0} aria-label="Puzzle canvas. Zoom in for larger circles, then scroll to explore.">
+      <div className="graphStage" style={fitSize ? { width: Math.max(fitSize.viewportWidth, fitSize.width * zoom / 100) } : undefined}>
       <svg
         className="graphCanvas"
+        style={fitSize ? { width: fitSize.width * zoom / 100, height: fitSize.height * zoom / 100, maxHeight: "none" } : undefined}
         viewBox={`0 0 ${width} ${height}`}
-        role="img"
+        role="group"
         aria-label="Interactive graph coloring puzzle"
+        aria-describedby={hintId}
       >
-        {edges.map(([a, b]) => {
-          const start = getVertexById(a);
-          const end = getVertexById(b);
-
-          if (!start || !end) {
-            return null;
-          }
-
-          const edgeKey = getEdgeKey(a, b);
-          const isConflict = conflictKeys.has(edgeKey);
-          const isActiveEdge = activeEdgeKeys.has(edgeKey);
-
-          const classNames = [
-            "edge",
-            isConflict ? "conflictEdge" : "",
-            isActiveEdge ? "activeEdge" : "",
-            hasActiveVertex && !isActiveEdge ? "dimmedEdge" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
-
-          return (
-            <line
-              key={edgeKey}
-              className={classNames}
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
-            />
-          );
-        })}
-
+        <g className="graphEdges" aria-hidden="true">
+          {orderedEdges.map(([a, b]) => {
+            const start = verticesById.get(a);
+            const end = verticesById.get(b);
+            if (!start || !end) return null;
+            const key = getEdgeKey(a, b);
+            const isActive = activeEdgeKeys.has(key);
+            const className = [
+              "edge",
+              conflictKeys.has(key) ? "conflictEdge" : "",
+              isActive ? "activeEdge" : "",
+              hasActiveVertex && !isActive ? "dimmedEdge" : "",
+            ].filter(Boolean).join(" ");
+            const coordinates = { x1: start.x, y1: start.y, x2: end.x, y2: end.y };
+            return (
+              <g key={key}>
+                {isActive && <line className="edgeHalo" {...coordinates} />}
+                <line className={className} {...coordinates} />
+              </g>
+            );
+          })}
+        </g>
         {vertices.map((vertex) => {
-          const isAdjacentVertex = adjacentVertexIds.has(vertex.id);
-
-          const classNames = [
-            "vertex",
-            isAdjacentVertex ? "adjacentVertex" : "",
-            hasActiveVertex &&
-            vertex.id !== activeVertexId &&
-            !isAdjacentVertex
-              ? "dimmedVertex"
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
-
+          const isActive = vertex.id === activeId;
+          const isAdjacent = adjacentVertexIds.has(vertex.id);
+          const dimmed = hasActiveVertex && !isActive && !isAdjacent;
+          const fill = vertex.color === null
+            ? "var(--uncolored-vertex)"
+            : activeTheme.colors[vertex.color] ?? "var(--uncolored-vertex)";
+          const connectionCount = edges.filter(([a, b]) => a === vertex.id || b === vertex.id).length;
           return (
             <g
               key={vertex.id}
-              className="vertexGroup"
+              className={`vertexGroup ${dimmed ? "dimmedVertexGroup" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-label={`Circle ${vertex.id}, ${vertex.color ?? "uncolored"}, ${connectionCount} connections. Press Enter or Space to change color.`}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(":focus-visible")) setFocusedId(vertex.id);
+              }}
+              onBlur={() => setFocusedId(null)}
               onPointerEnter={(event) => {
-                if (event.pointerType === "mouse") {
-                  onVertexHover?.(vertex.id);
-                }
+                if (event.pointerType === "mouse") setHoveredId(vertex.id);
               }}
               onPointerLeave={(event) => {
-                if (event.pointerType === "mouse") {
-                  onVertexLeave?.();
+                if (event.pointerType === "mouse") setHoveredId(null);
+              }}
+              onPointerDown={(event) => handlePointerDown(event, vertex.id)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={clearHold}
+              onPointerCancel={() => { suppressClick.current = true; clearHold(); }}
+              onLostPointerCapture={clearHold}
+              onContextMenu={(event) => event.preventDefault()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  if (!event.repeat) onVertexClick(vertex.id);
                 }
               }}
-              onClick={() => onVertexClick(vertex.id)}
+              onClick={(event) => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  event.preventDefault();
+                  return;
+                }
+                onVertexClick(vertex.id);
+              }}
             >
+              {isActive && <circle className="vertexFocusRing" cx={vertex.x} cy={vertex.y} r={vertexRadius + 7} />}
               <circle
-                className={classNames}
+                className={`vertex${isAdjacent ? " adjacentVertex" : ""}${isActive ? " focusedVertex" : ""}`}
                 cx={vertex.x}
                 cy={vertex.y}
                 r={vertexRadius}
-                fill={
-                  vertex.color === null
-                    ? UNCOLORED_VERTEX_COLOR
-                    : activeTheme.colors[vertex.color] ?? UNCOLORED_VERTEX_COLOR
-                }
+                fill={fill}
               />
-
               <text
                 className="vertexLabel"
                 x={vertex.x}
                 y={vertex.y + 6}
                 textAnchor="middle"
+                fill={vertex.color === null ? "var(--vertex-label)" : labelColor(fill)}
               >
                 {vertex.id}
               </text>
@@ -147,6 +266,38 @@ function GraphCanvas({
           );
         })}
       </svg>
+      </div>
+      </div>
+      <div className="graphFooter">
+        <div>
+          <p id={hintId} className="graphHint">Tap to color · Hover or hold a circle to trace connections</p>
+          <p className="traceStatus" role="status" aria-live="polite">
+          {solved
+            ? (fullscreen ? "Puzzle complete! Exit to continue." : "Puzzle complete!")
+            : hasActiveVertex ? `Circle ${activeId} · ${adjacentVertexIds.size} connections` : displayMessage}
+          </p>
+        </div>
+        <div className="graphZoom" role="group" aria-label="Graph zoom">
+          {typeof document !== "undefined" && document.fullscreenEnabled && (
+            <button type="button" aria-label={fullscreen ? "Exit full screen" : "Expand puzzle to full screen"} onClick={async () => {
+              setDisplayMessage("");
+              try {
+                if (fullscreen) await document.exitFullscreen();
+                else await canvas.current.requestFullscreen();
+              } catch {
+                setDisplayMessage("Full screen is unavailable. Use zoom to enlarge the graph.");
+              }
+            }}>{fullscreen ? "Exit" : "Expand"}</button>
+          )}
+          <button type="button" aria-label="Zoom out" disabled={zoom === 100} onClick={() => changeZoom(-10)}>−</button>
+          <button type="button" aria-label="Fit graph to screen" onClick={() => {
+            zoomAnchor.current = null;
+            setZoom(100);
+            viewport.current?.scrollTo({ top: 0, left: 0 });
+          }}>{zoom === 100 ? "Fit" : `${zoom}%`}</button>
+          <button type="button" aria-label="Zoom in" disabled={zoom === 300} onClick={() => changeZoom(10)}>+</button>
+        </div>
+      </div>
     </div>
   );
 }

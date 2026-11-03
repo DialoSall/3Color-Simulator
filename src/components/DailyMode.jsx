@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { getDailyPuzzle } from "../data/dailyPuzzles";
-import ColorThemePicker from "./ColorThemePicker";
+import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 
 const colorCycle = [null, "red", "blue", "yellow"];
@@ -93,8 +92,6 @@ function saveDailyCompletion(dateKey, result) {
 }
 
 function DailyMode() {
-  const navigate = useNavigate();
-
   const dailyPuzzle = useMemo(() => getDailyPuzzle(), []);
 
   const [currentPuzzle, setCurrentPuzzle] = useState(() =>
@@ -105,7 +102,6 @@ function DailyMode() {
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
   const [lastVertexId, setLastVertexId] = useState(null);
   const [resets, setResets] = useState(0);
-  const [hoveredVertexId, setHoveredVertexId] = useState(null);
   const [shareMessage, setShareMessage] = useState("");
   const [savedCompletion, setSavedCompletion] = useState(() =>
     getSavedDailyCompletion(dailyPuzzle.dateKey)
@@ -235,7 +231,6 @@ function DailyMode() {
     setVisitedVertices(new Set());
     setLastVertexId(null);
     setResets(0);
-    setHoveredVertexId(null);
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setShareMessage("");
@@ -246,7 +241,6 @@ function DailyMode() {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
-    setHoveredVertexId(null);
     setResets((previousResets) => previousResets + 1);
   }
 
@@ -290,20 +284,14 @@ function DailyMode() {
   }
 
   return (
-    <main className="app">
-      <button className="backButton" onClick={() => navigate("/")}>
-        ← Back Home
-      </button>
-
-      <section className="hero">
-        <p className="eyebrow">Daily Puzzle</p>
-        <h1>Today&apos;s 3Color</h1>
-
-        <p className="heroText">
-          A new graph-coloring puzzle every day. Complete today&apos;s graph
-          and try to beat your best result.
-        </p>
-      </section>
+    <main className="app gameApp">
+      <header className="gameHeading">
+        <div>
+          <p className="eyebrow">Daily Puzzle</p>
+          <h1>Today's 3Color</h1>
+        </div>
+        <p>Connected circles must have different colors.</p>
+      </header>
 
       <section className={`gameLayout ${solved ? "gameLayoutSolved" : ""}`}>
         <div className="gamePanel">
@@ -339,17 +327,6 @@ function DailyMode() {
               <strong>{conflicts.length}</strong>
             </div>
           </div>
-
-          {!solved && (
-            <div className="quickInstructions">
-              <span className="instructionIcon">?</span>
-
-              <p>
-                Tap a circle to change its color. Color every circle so that
-                connected circles never have the same color.
-              </p>
-            </div>
-          )}
 
           {solved && (
             <div className="completionCard" role="status" aria-live="polite">
@@ -407,15 +384,12 @@ function DailyMode() {
             onVertexClick={handleVertexClick}
             width={currentPuzzle.width}
             height={currentPuzzle.height}
-            activeVertexId={hoveredVertexId}
-            onVertexHover={setHoveredVertexId}
-            onVertexLeave={() => setHoveredVertexId(null)}
             colorTheme={activeTheme}
            />
         </div>
 
         {!solved && (
-          <aside className="statusPanel">
+          <aside className="statusPanel gameControls">
             <p className="eyebrow">Daily Status</p>
 
             <div className={savedCompletion ? "statusBox solved" : "statusBox"}>
@@ -432,7 +406,7 @@ function DailyMode() {
 
             <button onClick={handleResetColors}>Reset Puzzle</button>
 
-            <ColorThemePicker
+            <GameSettings
                 selectedThemeId={selectedThemeId}
                 onThemeChange={setSelectedThemeId}
                 activeTheme={activeTheme}
@@ -440,14 +414,6 @@ function DailyMode() {
                 onCustomThemeChange={setCustomTheme}
             />
 
-            <div className="rules">
-                <h3>Rules</h3>
-
-                <p>
-                    Color every circle. Circles connected by a line cannot share
-                    the same color.
-                </p>
-            </div>
           </aside>
         )}
       </section>

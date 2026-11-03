@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { levels } from "../data/levels";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
-import ColorThemePicker from "./ColorThemePicker";
+import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
@@ -88,7 +88,6 @@ function LevelMode() {
   const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [resets, setResets] = useState(0);
-  const [hoveredVertexId, setHoveredVertexId] = useState(null);
   const elapsedMillisecondsRef = useRef(0);
 
   const {
@@ -110,7 +109,7 @@ function LevelMode() {
     return isSolved(currentLevel.vertices, currentLevel.edges);
   }, [currentLevel]);
 
-  const activeVertexId = hoveredVertexId;
+  const levelPickerRef = useRef(null);
 
   const graphSectionRef = useRef(null);
   const completionCardRef = useRef(null);
@@ -177,7 +176,6 @@ function LevelMode() {
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
-    setHoveredVertexId(null);
     completionSoundPlayedRef.current = false;
   }, [levelId, highestUnlocked, levelIndex, navigate]);
 
@@ -266,7 +264,6 @@ function LevelMode() {
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
-    setHoveredVertexId(null);
 
     if (shouldScrollToGraph) {
       scrollToGraph();
@@ -340,7 +337,6 @@ function LevelMode() {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
-    setHoveredVertexId(null);
 
     setResets((previousResets) => previousResets + 1);
   }
@@ -352,7 +348,6 @@ function LevelMode() {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
-    setHoveredVertexId(null);
     setElapsedMilliseconds(0);
     setTimerRunning(false);
     setResets(0);
@@ -376,32 +371,22 @@ function LevelMode() {
   }
 
     return (
-        <main className="app">
-            <button className="backButton" onClick={() => navigate("/")}>
-              ← Back Home
-            </button>
-
-            <section className="hero">
-            <p className="eyebrow">Level Mode</p>
-            <h1>3Color</h1>
-
-            <p className="heroText">
-                Complete each graph to unlock the next level.
-            </p>
-            </section>
-
-            <section className="levelMap">
-            <div className="levelMapHeader">
-                <div>
+        <main className="app gameApp">
+            <header className="gameHeading">
+              <div>
                 <p className="eyebrow">Campaign</p>
-                <h2>Select a Level</h2>
-                </div>
+                <h1>Level {currentLevel.id} <span>/ {levels.length}</span></h1>
+              </div>
+              <p>Connected circles must have different colors.</p>
+            </header>
 
-                <p className="levelProgressText">
-                {Math.max(highestCompleted + 1, 0)} of {levels.length} completed
-                </p>
-            </div>
-
+            <details className="levelMap" ref={levelPickerRef}>
+              <summary className="levelMapSummary">
+                <span>Choose a level</span>
+                <span className="levelProgressText">
+                  {Math.max(highestCompleted + 1, 0)} of {levels.length} completed
+                </span>
+              </summary>
             <div className="levelGrid">
                 {levels.map((level, index) => {
                 const isLocked = index > highestUnlocked;
@@ -422,7 +407,11 @@ function LevelMode() {
                     key={level.id}
                     className={classNames}
                     disabled={isLocked}
-                    onClick={() => loadLevel(index, true)}
+                    aria-current={isCurrent ? "step" : undefined}
+                    onClick={() => {
+                      loadLevel(index, true);
+                      levelPickerRef.current.open = false;
+                    }}
                     >
                     <span className="levelButtonNumber">
                         {isCompleted ? "✓" : level.id}
@@ -439,7 +428,7 @@ function LevelMode() {
                 );
                 })}
             </div>
-            </section>
+            </details>
 
             <section
               className={`gameLayout ${solved ? "gameLayoutSolved" : ""}`}
@@ -479,17 +468,6 @@ function LevelMode() {
                 </div>
               </div>
 
-              {!solved && (
-                <div className="quickInstructions">
-                  <span className="instructionIcon">?</span>
-
-                  <p>
-                    Tap a circle to change its color. Color every circle so that circles
-                    connected by a line never have the same color.
-                  </p>
-                </div>
-              )}
-              
               {solved && (
                 <div
                   className="completionCard"
@@ -545,23 +523,14 @@ function LevelMode() {
               )}
             
               <GraphCanvas
+                key={currentLevel.id}
                 vertices={currentLevel.vertices}
                 edges={currentLevel.edges}
                 conflicts={conflicts}
                 onVertexClick={handleVertexClick}
                 width={currentLevel.width}
                 height={currentLevel.height}
-                activeVertexId={activeVertexId}
-                onVertexHover={setHoveredVertexId}
-                onVertexLeave={() => setHoveredVertexId(null)}
                 colorTheme={activeTheme}
-                toolbar={
-                  <SoundToggle
-                    soundEnabled={soundEnabled}
-                    onSoundEnabledChange={setSoundEnabled}
-                    onPreviewSound={() => playSound("button", { force: true })}
-                  />
-                }
               />
 
 
@@ -588,7 +557,7 @@ function LevelMode() {
             </div>
 
             {!solved && (
-              <aside className="statusPanel">
+              <aside className="statusPanel gameControls">
                 <p className="eyebrow">Status</p>
 
                 <div className="statusBox">
@@ -603,7 +572,14 @@ function LevelMode() {
 
                 <button onClick={handleReset}>Reset Puzzle</button>
 
-                <ColorThemePicker
+                <GameSettings
+                  soundControl={
+                    <SoundToggle
+                      soundEnabled={soundEnabled}
+                      onSoundEnabledChange={setSoundEnabled}
+                      onPreviewSound={() => playSound("button", { force: true })}
+                    />
+                  }
                   selectedThemeId={selectedThemeId}
                   onThemeChange={setSelectedThemeId}
                   activeTheme={activeTheme}
@@ -611,13 +587,6 @@ function LevelMode() {
                   onCustomThemeChange={setCustomTheme}
                 />
 
-                <div className="rules">
-                  <h3>Rules</h3>
-
-                  <p>
-                    Color every circle. Circles connected by a line cannot share the same color.
-                  </p>
-                </div>
               </aside>
             )}
             </section>
