@@ -73,24 +73,20 @@ function HomeScreen() {
     <main className="app homeApp">
       <section className="homeChallenge">
         <div className="homeCopy">
-          <p className="eyebrow">Graph Coloring Puzzle</p>
+          <p className="eyebrow">A graph-coloring puzzle</p>
 
-          <h1>3Color</h1>
-
-          <p className="homeChallengeText">
-            Can you complete all 30 levels?
-          </p>
+          <h1><span>Three colors.</span><span>One simple rule.</span></h1>
 
           <p className="heroText">
-            Color every circle using red, blue, and yellow. Circles
-            connected by a line cannot have the same color. The rules are
-            simple. The puzzles get harder.
+            Use red, blue, and yellow to color every circle. Connected circles
+            must have different colors. Start simple and work your way through
+            30 increasingly tricky graphs.
           </p>
 
           <div className="homeStats">
-            <span>30 Levels</span>
-            <span>3 Colors</span>
-            <span>No Matching Lines</span>
+            <span>30 levels</span>
+            <span>Daily puzzles</span>
+            <span>Random graphs</span>
           </div>
 
           <div className="homeActions">
@@ -98,7 +94,7 @@ function HomeScreen() {
               className="primaryHomeButton"
               onClick={() => navigate("/levels/1")}
             >
-              Start Challenge
+              <span>Start Challenge</span><span aria-hidden="true">→</span>
             </button>
 
             <button
@@ -108,26 +104,24 @@ function HomeScreen() {
               Today's Puzzle
             </button>
 
-            <button className="shareHomeButton" onClick={handleShare}>
-              Share 3Color
-            </button>
+          </div>
+          <button className="randomHomeButton" onClick={() => navigate("/custom")}>
+            Generate a random puzzle <span aria-hidden="true">↗</span>
+          </button>
 
-            <button
-              className="secondaryHomeButton"
-              onClick={() => navigate("/custom")}
-            >
-              Generate Random Puzzle
-            </button>
-            
+          <div className="homeMeta">
+            <span>Play at your own pace.</span>
+            <button className="shareHomeButton" onClick={handleShare}>Share 3Color <span aria-hidden="true">↗</span></button>
           </div>
           <InstallPrompt />
 
           {shareMessage && (
-            <p className="shareMessage">{shareMessage}</p>
+            <p className="shareMessage" role="status">{shareMessage}</p>
           )}
         </div>
 
         <div className="homePreviewCard" aria-hidden="true">
+          <div className="previewCardHeader"><span>The challenge</span><span>3 colors · 4 circles</span></div>
           <div className="previewGraph">
             <svg viewBox="0 0 420 320" className="previewSvg">
               <line x1="210" y1="55" x2="85" y2="245" />
@@ -144,8 +138,8 @@ function HomeScreen() {
           </div>
 
           <div className="previewCaption">
-            <p>Simple rule.</p>
-            <strong>Harder than it looks.</strong>
+            <span className="previewSolvedMark">✓</span>
+            <div><strong>Every connection checks out.</strong><p>No connected circles share a color.</p></div>
           </div>
         </div>
       </section>

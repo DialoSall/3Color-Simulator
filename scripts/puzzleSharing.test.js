@@ -126,7 +126,7 @@ test("the game renders a seeded graph with exact SVG geometry and recovers from 
     for (const { x, y } of graph.vertices) {
       assert.ok(html.includes(`cx="${x}" cy="${y}"`));
     }
-    assert.equal((html.match(/fill="#d1d1d6"/g) ?? []).length, 3);
+    assert.equal((html.match(/fill="var\(--uncolored-vertex\)"/g) ?? []).length, 3);
     assert.match(render("/custom?seed=invalid"), /invalid or unsupported/);
     assert.match(render("/"), /Start Challenge/);
   } finally {

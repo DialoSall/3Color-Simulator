@@ -25,6 +25,19 @@
     <link rel="canonical" href="https://3color.app/" />
 
     <meta name="theme-color" content="#f5f5f7" />
+    <script>
+      // Apply the saved appearance before the first paint.
+      try {
+        const mode = localStorage.getItem('3color-appearance');
+        const dark = mode === 'dark' ||
+          (mode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.appearance = dark ? 'dark' : 'light';
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#111318' : '#f5f5f7';
+      } catch {
+        document.documentElement.dataset.appearance =
+          matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+    </script>
 
     <meta property="og:title" content="3Color | Graph Coloring Game" />
     <meta property="og:site_name" content="3Color Simulator" />
