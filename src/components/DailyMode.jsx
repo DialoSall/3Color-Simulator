@@ -4,6 +4,8 @@ import { getConflicts, isSolved } from "../utils/graphValidation";
 import { getDailyPuzzle } from "../data/dailyPuzzles";
 import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
+import SoundToggle from "./SoundToggle";
+import { useSoundEffects } from "../hooks/useSoundEffects";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const DAILY_COMPLETIONS_KEY = "3color-daily-completions";
@@ -110,6 +112,8 @@ function DailyMode() {
   const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
+  const completionSoundPlayedRef = useRef(false);
+  const { soundEnabled, setSoundEnabled, playSound } = useSoundEffects();
 
   const {
     selectedThemeId,
@@ -126,6 +130,20 @@ function DailyMode() {
   const solved = useMemo(() => {
     return isSolved(currentPuzzle.vertices, currentPuzzle.edges);
   }, [currentPuzzle]);
+
+  useEffect(() => {
+    if (!solved) {
+      completionSoundPlayedRef.current = false;
+      return;
+    }
+
+    if (completionSoundPlayedRef.current) {
+      return;
+    }
+
+    completionSoundPlayedRef.current = true;
+    playSound("complete");
+  }, [solved, playSound]);
 
   useEffect(() => {
     elapsedMillisecondsRef.current = elapsedMilliseconds;
@@ -178,6 +196,8 @@ function DailyMode() {
   ]);
 
   function handleVertexClick(vertexId) {
+    playSound("vertex");
+
     if (!timerRunning && !solved) {
       setTimerRunning(true);
     }
@@ -201,31 +221,40 @@ function DailyMode() {
 
     setLastVertexId(vertexId);
 
-    setCurrentPuzzle((previousPuzzle) => {
-      const updatedVertices = previousPuzzle.vertices.map((vertex) => {
-        if (vertex.id !== vertexId) {
-          return vertex;
-        }
+    const cycleVertex = (vertex) => {
+      if (vertex.id !== vertexId) {
+        return vertex;
+      }
 
-        const currentColorIndex = colorCycle.indexOf(vertex.color);
+      const currentColorIndex = colorCycle.indexOf(vertex.color);
 
-        const nextColor =
-          colorCycle[(currentColorIndex + 1) % colorCycle.length];
-
-        return {
-          ...vertex,
-          color: nextColor,
-        };
-      });
+      const nextColor =
+        colorCycle[(currentColorIndex + 1) % colorCycle.length];
 
       return {
-        ...previousPuzzle,
-        vertices: updatedVertices,
+        ...vertex,
+        color: nextColor,
       };
-    });
+    };
+
+    const nextConflictCount = getConflicts(
+      currentPuzzle.vertices.map(cycleVertex),
+      currentPuzzle.edges
+    ).length;
+
+    setCurrentPuzzle((previousPuzzle) => ({
+      ...previousPuzzle,
+      vertices: previousPuzzle.vertices.map(cycleVertex),
+    }));
+
+    if (nextConflictCount > conflicts.length) {
+      playSound("conflict");
+    }
   }
 
   function handleReplayDailyPuzzle() {
+    playSound("reset");
+    completionSoundPlayedRef.current = false;
     setCurrentPuzzle(clonePuzzle(dailyPuzzle));
     setRecolors(0);
     setVisitedVertices(new Set());
@@ -237,6 +266,8 @@ function DailyMode() {
   }
 
   function handleResetColors() {
+    playSound("reset");
+    completionSoundPlayedRef.current = false;
     setCurrentPuzzle(clonePuzzle(dailyPuzzle));
     setRecolors(0);
     setVisitedVertices(new Set());
@@ -385,6 +416,13 @@ function DailyMode() {
             width={currentPuzzle.width}
             height={currentPuzzle.height}
             colorTheme={activeTheme}
+            toolbar={
+              <SoundToggle
+                soundEnabled={soundEnabled}
+                onSoundEnabledChange={setSoundEnabled}
+                onPreviewSound={() => playSound("button", { force: true })}
+              />
+            }
            />
         </div>
 

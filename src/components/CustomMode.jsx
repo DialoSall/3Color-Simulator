@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
@@ -6,6 +6,8 @@ import { generateRandomGraph } from "../utils/randomGraph";
 import { createPuzzleUrl, readSharedPuzzle } from "../utils/graphSharing";
 import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
+import SoundToggle from "./SoundToggle";
+import { useSoundEffects } from "../hooks/useSoundEffects";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 
@@ -39,6 +41,8 @@ function CustomMode() {
   const [recolors, setRecolors] = useState(0);
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
   const [lastVertexId, setLastVertexId] = useState(null);
+  const completionSoundPlayedRef = useRef(false);
+  const { soundEnabled, setSoundEnabled, playSound } = useSoundEffects();
   const {
     selectedThemeId,
     setSelectedThemeId,
@@ -59,6 +63,7 @@ function CustomMode() {
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
+    completionSoundPlayedRef.current = false;
   }, [seed, sharedPuzzle]);
 
   const conflicts = useMemo(() => {
@@ -68,6 +73,20 @@ function CustomMode() {
   const solved = useMemo(() => {
     return isSolved(currentGraph.vertices, currentGraph.edges);
   }, [currentGraph]);
+
+  useEffect(() => {
+    if (!solved) {
+      completionSoundPlayedRef.current = false;
+      return;
+    }
+
+    if (completionSoundPlayedRef.current) {
+      return;
+    }
+
+    completionSoundPlayedRef.current = true;
+    playSound("complete");
+  }, [solved, playSound]);
 
 function handleGenerateGraph() {
   const parsedVertexCount = Number(vertexCountInput);
@@ -85,6 +104,8 @@ function handleGenerateGraph() {
     edgeProbability
   );
 
+  playSound("level");
+  completionSoundPlayedRef.current = false;
   setCurrentGraph(nextGraph);
   setRecolors(0);
   setVisitedVertices(new Set());
@@ -113,6 +134,8 @@ async function handleSharePuzzle() {
 }
 
 function handleResetColors() {
+  playSound("reset");
+  completionSoundPlayedRef.current = false;
   setCurrentGraph((previousGraph) =>
     resetGraphColors(previousGraph)
   );
@@ -123,6 +146,8 @@ function handleResetColors() {
 }
 
 function handleVertexClick(vertexId) {
+  playSound("vertex");
+
   const hasVisitedBefore = visitedVertices.has(vertexId);
 
   const isReturningToVertex =
@@ -144,28 +169,35 @@ function handleVertexClick(vertexId) {
 
   setLastVertexId(vertexId);
 
-  setCurrentGraph((previousGraph) => {
-    const updatedVertices = previousGraph.vertices.map((vertex) => {
-      if (vertex.id !== vertexId) {
-        return vertex;
-      }
+  const cycleVertex = (vertex) => {
+    if (vertex.id !== vertexId) {
+      return vertex;
+    }
 
-      const currentColorIndex = colorCycle.indexOf(vertex.color);
+    const currentColorIndex = colorCycle.indexOf(vertex.color);
 
-      const nextColor =
-        colorCycle[(currentColorIndex + 1) % colorCycle.length];
-
-      return {
-        ...vertex,
-        color: nextColor,
-      };
-    });
+    const nextColor =
+      colorCycle[(currentColorIndex + 1) % colorCycle.length];
 
     return {
-      ...previousGraph,
-      vertices: updatedVertices,
+      ...vertex,
+      color: nextColor,
     };
-  });
+  };
+
+  const nextConflictCount = getConflicts(
+    currentGraph.vertices.map(cycleVertex),
+    currentGraph.edges
+  ).length;
+
+  setCurrentGraph((previousGraph) => ({
+    ...previousGraph,
+    vertices: previousGraph.vertices.map(cycleVertex),
+  }));
+
+  if (nextConflictCount > conflicts.length) {
+    playSound("conflict");
+  }
 }
 
   return (
@@ -199,6 +231,13 @@ function handleVertexClick(vertexId) {
               width={currentGraph.width}
               height={currentGraph.height}
               colorTheme={activeTheme}
+              toolbar={
+                <SoundToggle
+                  soundEnabled={soundEnabled}
+                  onSoundEnabledChange={setSoundEnabled}
+                  onPreviewSound={() => playSound("button", { force: true })}
+                />
+              }
             />
         </div>
 
