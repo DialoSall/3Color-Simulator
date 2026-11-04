@@ -1,0 +1,14 @@
+import month0 from "./2026-11.js";
+import month1 from "./2026-12.js";
+import month2 from "./2027-01.js";
+import month3 from "./2027-02.js";
+import month4 from "./2027-03.js";
+import month5 from "./2027-04.js";
+import month6 from "./2027-05.js";
+import month7 from "./2027-06.js";
+import month8 from "./2027-07.js";
+import month9 from "./2027-08.js";
+import month10 from "./2027-09.js";
+import month11 from "./2027-10.js";
+import month12 from "./2027-11.js";
+export const generatedDailyPuzzles = [...month0, ...month1, ...month2, ...month3, ...month4, ...month5, ...month6, ...month7, ...month8, ...month9, ...month10, ...month11, ...month12];

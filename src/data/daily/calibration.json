@@ -1,0 +1,109 @@
+{
+  "evaluatorVersion": 1,
+  "probes": 8,
+  "scoreFormula": "meanNodes + 4*meanBacktracks + 2*meanDecisions",
+  "campaign": [
+    {
+      "id": 25,
+      "name": "Lockstep",
+      "vertices": 16,
+      "edges": 36,
+      "meanNodes": 65,
+      "meanBacktracks": 48,
+      "meanDecisions": 18.875,
+      "forcedRatio": 0.412,
+      "score": 294.75,
+      "density": 0.3,
+      "cycleRank": 21
+    },
+    {
+      "id": 26,
+      "name": "Chain Reaction",
+      "vertices": 14,
+      "edges": 32,
+      "meanNodes": 40.375,
+      "meanBacktracks": 25.375,
+      "meanDecisions": 6.625,
+      "forcedRatio": 0.606,
+      "score": 155.125,
+      "density": 0.3516,
+      "cycleRank": 19
+    },
+    {
+      "id": 27,
+      "name": "Signal Tower",
+      "vertices": 15,
+      "edges": 38,
+      "meanNodes": 16,
+      "meanBacktracks": 0,
+      "meanDecisions": 5.125,
+      "forcedRatio": 0.525,
+      "score": 26.25,
+      "density": 0.3619,
+      "cycleRank": 24
+    },
+    {
+      "id": 28,
+      "name": "Circuit Breaker",
+      "vertices": 16,
+      "edges": 45,
+      "meanNodes": 21.5,
+      "meanBacktracks": 4.5,
+      "meanDecisions": 1.625,
+      "forcedRatio": 0.762,
+      "score": 42.75,
+      "density": 0.375,
+      "cycleRank": 30
+    },
+    {
+      "id": 29,
+      "name": "Core Pressure",
+      "vertices": 17,
+      "edges": 49,
+      "meanNodes": 27.875,
+      "meanBacktracks": 9.875,
+      "meanDecisions": 7.25,
+      "forcedRatio": 0.521,
+      "score": 81.875,
+      "density": 0.3603,
+      "cycleRank": 33
+    },
+    {
+      "id": 30,
+      "name": "Endgame Relay",
+      "vertices": 18,
+      "edges": 59,
+      "meanNodes": 88.125,
+      "meanBacktracks": 69.125,
+      "meanDecisions": 17.75,
+      "forcedRatio": 0.551,
+      "score": 400.125,
+      "density": 0.3856,
+      "cycleRank": 42
+    }
+  ],
+  "bands": {
+    "Challenging": [
+      26.25,
+      81.875
+    ],
+    "Hard": [
+      81.875,
+      294.75
+    ],
+    "Expert": [
+      294.75,
+      400.125
+    ]
+  },
+  "range": {
+    "start": "2026-11-04",
+    "end": "2027-11-03"
+  },
+  "counts": {
+    "Challenging": 55,
+    "Hard": 219,
+    "Expert": 91
+  },
+  "candidatesExamined": 10886
+}

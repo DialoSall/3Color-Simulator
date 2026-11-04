@@ -31,6 +31,7 @@ function GraphCanvas({
   height = 480,
   colorTheme = getThemeById(DEFAULT_THEME_ID),
   toolbar = null,
+  design = null,
 }) {
   const activeTheme = colorTheme ?? getThemeById(DEFAULT_THEME_ID);
   const [hoveredId, setHoveredId] = useState(null);
@@ -119,6 +120,7 @@ function GraphCanvas({
   const activeId = vertices.some((vertex) => vertex.id === candidateId) ? candidateId : null;
   const hasActiveVertex = activeId !== null;
   const conflictKeys = new Set(conflicts.map(([a, b]) => getEdgeKey(a, b)));
+  const contourKeys = new Set((design?.contourEdges ?? []).map(([a,b])=>getEdgeKey(a,b)));
   const activeEdgeKeys = new Set();
   const adjacentVertexIds = new Set();
   const verticesById = new Map(vertices.map((vertex) => [vertex.id, vertex]));
@@ -132,9 +134,8 @@ function GraphCanvas({
   }
 
   // Draw the connections being traced last, so other edges cannot cover them.
-  const orderedEdges = [...edges].sort((a, b) =>
-    Number(activeEdgeKeys.has(getEdgeKey(...a))) - Number(activeEdgeKeys.has(getEdgeKey(...b)))
-  );
+  const edgePriority = edge => activeEdgeKeys.has(getEdgeKey(...edge)) ? 2 : contourKeys.has(getEdgeKey(...edge)) ? 1 : 0;
+  const orderedEdges = [...edges].sort((a,b)=>edgePriority(a)-edgePriority(b));
 
   function clearHold() {
     window.clearTimeout(holdTimer.current);
@@ -165,7 +166,7 @@ function GraphCanvas({
   }
 
   return (
-    <div ref={canvas} className={`graphCanvasWrap ${hasActiveVertex ? "isTracing" : ""}`}>
+    <div ref={canvas} className={`graphCanvasWrap ${hasActiveVertex ? "isTracing" : ""} ${design ? "hasDesign" : ""}`}>
       {toolbar && <div className="graphToolbar">{toolbar}</div>}
       <div className="graphViewport" ref={viewport} tabIndex={0} aria-label="Puzzle canvas. Zoom in for larger circles, then scroll to explore.">
       <div className="graphStage" style={fitSize ? { width: Math.max(fitSize.viewportWidth, fitSize.width * zoom / 100) } : undefined}>
@@ -186,6 +187,7 @@ function GraphCanvas({
             const isActive = activeEdgeKeys.has(key);
             const className = [
               "edge",
+              contourKeys.has(key) ? "contourEdge" : "",
               conflictKeys.has(key) ? "conflictEdge" : "",
               isActive ? "activeEdge" : "",
               hasActiveVertex && !isActive ? "dimmedEdge" : "",

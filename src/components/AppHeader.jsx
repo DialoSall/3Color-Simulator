@@ -13,6 +13,7 @@ function AppHeader() {
         <NavLink to="/levels">Campaign</NavLink>
         <NavLink to="/daily">Daily</NavLink>
         <NavLink to="/custom">Random</NavLink>
+        {import.meta.env.DEV && <NavLink to="/dev/preview" title="Development preview">Preview</NavLink>}
       </nav>
       <label className="appearanceControl">
         <span>Appearance</span>

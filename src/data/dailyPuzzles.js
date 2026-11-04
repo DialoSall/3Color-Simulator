@@ -1,166 +1,63 @@
-export const dailyPuzzles = [
-  {
-    id: "daily-001",
-    dateKey: "2026-09-03",
-    name: "Daily Puzzle #1",
-    description:
-      "Today's graph-coloring challenge. Color every circle so connected circles never share the same color.",
-    width: 520,
-    height: 420,
-    vertices: [
-      { id: 1, x: 260, y: 60, color: null },
-      { id: 2, x: 150, y: 150, color: null },
-      { id: 3, x: 370, y: 150, color: null },
-      { id: 4, x: 120, y: 290, color: null },
-      { id: 5, x: 260, y: 350, color: null },
-      { id: 6, x: 400, y: 290, color: null },
-    ],
-    edges: [
-      [1, 2],
-      [1, 3],
-      [2, 3],
-      [2, 4],
-      [2, 5],
-      [3, 5],
-      [3, 6],
-      [4, 5],
-      [5, 6],
-    ],
-  },
-  {
-    id: "daily-002",
-    dateKey: "2026-09-22",
-    name: "Fox Face",
-    description:
-      "A fox-shaped challenge built from tightly connected regions. Watch how choices near the ears and eyes constrain the rest of the face.",
-    theme: {
-      id: "fox",
-      name: "Fox",
-      colors: {
-        red: "#d96a2b",
-        blue: "#2b2118",
-        yellow: "#f4d9a6",
-      },
-    },
-    width: 900,
-    height: 650,
-    vertices: [
-      { id: 0, x: 220, y: 70, color: null },
-      { id: 1, x: 680, y: 70, color: null },
+import { designedDailyPuzzles } from "./daily/designed/index.js";
+import { dailyDesignBankConfig } from "./daily/designConfig.js";
+import { generatedDailyPuzzles } from "./daily/generated/index.js";
+import { handcraftedPuzzles } from "./daily/handcrafted.js";
+import { historicalSchedule } from "./daily/history.js";
+import { dailyOverrides } from "./daily/overrides.js";
+import { getDailyDateKey, getDailyNumber, parseDateKey } from "../utils/dailyDate.js";
+export { getDailyDateKey } from "../utils/dailyDate.js";
 
-      { id: 2, x: 300, y: 175, color: null },
-      { id: 3, x: 600, y: 175, color: null },
-      { id: 4, x: 450, y: 125, color: null },
-
-      { id: 5, x: 145, y: 255, color: null },
-      { id: 6, x: 755, y: 255, color: null },
-
-      { id: 7, x: 320, y: 300, color: null },
-      { id: 8, x: 580, y: 300, color: null },
-      { id: 9, x: 235, y: 365, color: null },
-      { id: 10, x: 665, y: 365, color: null },
-      { id: 11, x: 450, y: 300, color: null },
-
-      { id: 12, x: 350, y: 430, color: null },
-      { id: 13, x: 550, y: 430, color: null },
-      { id: 14, x: 450, y: 470, color: null },
-
-      { id: 15, x: 295, y: 520, color: null },
-      { id: 16, x: 605, y: 520, color: null },
-      { id: 17, x: 450, y: 585, color: null },
-    ],
-    edges: [
-      [0, 5],
-      [5, 9],
-      [9, 15],
-      [15, 17],
-      [17, 16],
-      [16, 10],
-      [10, 6],
-      [6, 1],
-
-      [0, 2],
-      [2, 4],
-      [4, 3],
-      [3, 1],
-      [0, 4],
-      [1, 4],
-
-      [2, 7],
-      [7, 11],
-      [11, 8],
-      [8, 3],
-      [5, 7],
-      [6, 8],
-      [7, 9],
-      [8, 10],
-
-      [9, 12],
-      [12, 14],
-      [14, 13],
-      [13, 10],
-
-      [11, 12],
-      [11, 13],
-      [11, 14],
-
-      [12, 15],
-      [13, 16],
-      [14, 17],
-
-      [7, 12],
-      [8, 13],
-      [4, 11],
-
-      [12, 17],
-      [13, 17],
-      [2, 11],
-      [3, 11],
-      [2, 9],
-      [3, 10],
-      [2, 8],
-      [3, 7],
-      [4, 12],
-      [4, 13],
-    ],
-  },
-];
-
-const DAILY_START_DATE_UTC = Date.UTC(2026, 8, 3); // September 3, 2026
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-
-export function getDailyDateKey(date = new Date()) {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+function freeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.values(value).forEach(freeze);
+    Object.freeze(value);
+  }
+  return value;
 }
 
+export const dailyPuzzles = freeze([...handcraftedPuzzles, ...generatedDailyPuzzles, ...designedDailyPuzzles, ...dailyOverrides]);
+const byId = new Map();
+for (const puzzle of dailyPuzzles) {
+  if (byId.has(puzzle.id)) throw new Error(`Duplicate Daily id: ${puzzle.id}`);
+  byId.set(puzzle.id,puzzle);
+}
+const schedule = {...historicalSchedule};
+for (const puzzle of generatedDailyPuzzles) {
+  if (Object.hasOwn(schedule,puzzle.dateKey)) throw new Error(`Duplicate Daily date: ${puzzle.dateKey}`);
+  if (puzzle.dateKey <= dailyDesignBankConfig.preserveThrough) schedule[puzzle.dateKey] = puzzle.id;
+}
+const designedDates = new Set();
+for (const puzzle of designedDailyPuzzles) {
+  if (designedDates.has(puzzle.dateKey)) throw new Error(`Duplicate designed Daily date: ${puzzle.dateKey}`);
+  designedDates.add(puzzle.dateKey);
+  schedule[puzzle.dateKey] = puzzle.id;
+}
+const overriddenDates = new Set();
+for (const puzzle of dailyOverrides) {
+  if (overriddenDates.has(puzzle.dateKey)) throw new Error(`Duplicate handcrafted override: ${puzzle.dateKey}`);
+  overriddenDates.add(puzzle.dateKey);
+  schedule[puzzle.dateKey] = puzzle.id;
+}
+export const dailySchedule = Object.freeze(schedule);
+export class MissingDailyPuzzleError extends Error {
+  constructor(dateKey) {
+    super(`No Daily puzzle is scheduled for ${dateKey}.`);
+    this.name = 'MissingDailyPuzzleError';
+    this.dateKey = dateKey;
+  }
+}
+const scheduledPuzzles = new Map();
+export function getDailyPuzzleForDate(dateKey) {
+  parseDateKey(dateKey);
+  if (scheduledPuzzles.has(dateKey)) return scheduledPuzzles.get(dateKey);
+  const puzzle = byId.get(dailySchedule[dateKey]);
+  if (!puzzle) throw new MissingDailyPuzzleError(dateKey);
+  // The date override applies only to explicitly snapshotted historical repeats.
+  // Original historical records, graph IDs, and graph data remain untouched.
+  const scheduled = Object.freeze({...puzzle, dateKey, dailyNumber: getDailyNumber(dateKey)});
+  scheduledPuzzles.set(dateKey,scheduled);
+  return scheduled;
+}
 export function getDailyPuzzle(date = new Date()) {
-  const dateKey = getDailyDateKey(date);
-
-  const todayUTC = Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate()
-  );
-
-  const daysSinceStart = Math.max(
-    0,
-    Math.floor((todayUTC - DAILY_START_DATE_UTC) / MILLISECONDS_PER_DAY)
-  );
-
-  const availablePuzzles = dailyPuzzles
-    .filter((puzzle) => puzzle.dateKey <= dateKey)
-    .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-
-  const sourcePuzzle =
-    availablePuzzles[availablePuzzles.length - 1] ?? dailyPuzzles[0];
-
-  return {
-    ...sourcePuzzle,
-    dateKey,
-    dailyNumber: daysSinceStart + 1,
-  };
+  return getDailyPuzzleForDate(getDailyDateKey(date));
 }

@@ -1352,6 +1352,8 @@ summary:focus-visible, a:focus-visible, .graphViewport:focus-visible {
 .graphEdges { pointer-events: none; }
 .edge { stroke: var(--edge); stroke-width: 1.7; vector-effect: non-scaling-stroke; transition: opacity 0.15s ease, stroke 0.15s ease; }
 .edgeHalo { stroke: var(--canvas); stroke-width: 8; vector-effect: non-scaling-stroke; }
+.contourEdge { stroke-width: 2.8; }
+.graphCanvasWrap.hasDesign .edge:not(.contourEdge):not(.activeEdge):not(.conflictEdge):not(.dimmedEdge) { stroke-width: 1.1; opacity: 0.58; }
 .activeEdge { stroke: var(--trace); stroke-width: 3; opacity: 1; }
 .conflictEdge { stroke: var(--danger); stroke-width: 2.8; stroke-dasharray: 7 4; }
 .conflictEdge.activeEdge { stroke-width: 3.5; }

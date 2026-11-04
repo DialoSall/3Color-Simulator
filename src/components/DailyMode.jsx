@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
-import { getDailyPuzzle } from "../data/dailyPuzzles";
+import { getDailyPuzzleForDate, MissingDailyPuzzleError } from "../data/dailyPuzzles";
+import { useDailyDate } from "../hooks/useDailyDate";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 
 const colorCycle = [null, "red", "blue", "yellow"];
-const DAILY_COMPLETIONS_KEY = "3color-daily-completions";
 const DAILY_URL = "https://3color.app/daily";
 
 function clonePuzzle(puzzle) {
@@ -33,69 +34,32 @@ function formatTime(totalMilliseconds) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function getSavedDailyCompletions() {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
+function DailyMode({ progressService, previewDateKey } = {}) {
+  const today = useDailyDate();
+  const isPreview = import.meta.env.DEV && Boolean(previewDateKey);
+  const dateKey = isPreview ? previewDateKey : today;
+  let puzzle;
   try {
-    const savedValue = window.localStorage.getItem(DAILY_COMPLETIONS_KEY);
-
-    if (!savedValue) {
-      return {};
-    }
-
-    return JSON.parse(savedValue);
-  } catch {
-    return {};
-  }
-}
-
-function getSavedDailyCompletion(dateKey) {
-  const completions = getSavedDailyCompletions();
-  return completions[dateKey] ?? null;
-}
-
-function isBetterResult(nextResult, previousResult) {
-  if (!previousResult) {
-    return true;
-  }
-
-  if (nextResult.timeMilliseconds !== previousResult.timeMilliseconds) {
-    return nextResult.timeMilliseconds < previousResult.timeMilliseconds;
-  }
-
-  if (nextResult.recolors !== previousResult.recolors) {
-    return nextResult.recolors < previousResult.recolors;
-  }
-
-  return nextResult.resets < previousResult.resets;
-}
-
-function saveDailyCompletion(dateKey, result) {
-  if (typeof window === "undefined") {
-    return result;
-  }
-
-  const completions = getSavedDailyCompletions();
-  const previousResult = completions[dateKey];
-
-  if (isBetterResult(result, previousResult)) {
-    completions[dateKey] = result;
-    window.localStorage.setItem(
-      DAILY_COMPLETIONS_KEY,
-      JSON.stringify(completions)
+    puzzle = getDailyPuzzleForDate(dateKey);
+  } catch (error) {
+    if (!(error instanceof MissingDailyPuzzleError)) throw error;
+    return (
+      <main className="app gameApp">
+        <header className="gameHeading"><h1>Today's 3Color</h1></header>
+        <p role="status">The Daily puzzle for {dateKey} is unavailable. Please check back later.</p>
+      </main>
     );
-
-    return result;
   }
-
-  return previousResult;
+  return <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} />;
 }
 
-function DailyMode() {
-  const dailyPuzzle = useMemo(() => getDailyPuzzle(), []);
-
+function DailyGame({ dailyPuzzle, progressService, preview }) {
+  const isPreview = import.meta.env.DEV && preview;
+  const {
+    bestResult: savedCompletion, progressError, recordMove, recordReset,
+    completeAttempt, replayAttempt,
+  } = useDailyProgress(dailyPuzzle, progressService);
+  const [usePuzzleTheme, setUsePuzzleTheme] = useState(Boolean(dailyPuzzle.theme));
   const [currentPuzzle, setCurrentPuzzle] = useState(() =>
     clonePuzzle(dailyPuzzle)
   );
@@ -105,10 +69,6 @@ function DailyMode() {
   const [lastVertexId, setLastVertexId] = useState(null);
   const [resets, setResets] = useState(0);
   const [shareMessage, setShareMessage] = useState("");
-  const [savedCompletion, setSavedCompletion] = useState(() =>
-    getSavedDailyCompletion(dailyPuzzle.dateKey)
-  );
-
   const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
@@ -174,22 +134,16 @@ function DailyMode() {
     }
 
     const result = {
-      dateKey: dailyPuzzle.dateKey,
-      dailyNumber: dailyPuzzle.dailyNumber,
-      sourceLevelId: dailyPuzzle.id,
       timeMilliseconds: elapsedMilliseconds,
       recolors,
       resets,
       completedAt: new Date().toISOString(),
     };
 
-    const savedResult = saveDailyCompletion(dailyPuzzle.dateKey, result);
-    setSavedCompletion(savedResult);
+    completeAttempt(result);
   }, [
     solved,
-    dailyPuzzle.dateKey,
-    dailyPuzzle.dailyNumber,
-    dailyPuzzle.id,
+    completeAttempt,
     elapsedMilliseconds,
     recolors,
     resets,
@@ -197,6 +151,7 @@ function DailyMode() {
 
   function handleVertexClick(vertexId) {
     playSound("vertex");
+    recordMove();
 
     if (!timerRunning && !solved) {
       setTimerRunning(true);
@@ -254,6 +209,7 @@ function DailyMode() {
 
   function handleReplayDailyPuzzle() {
     playSound("reset");
+    replayAttempt();
     completionSoundPlayedRef.current = false;
     setCurrentPuzzle(clonePuzzle(dailyPuzzle));
     setRecolors(0);
@@ -267,6 +223,7 @@ function DailyMode() {
 
   function handleResetColors() {
     playSound("reset");
+    recordReset();
     completionSoundPlayedRef.current = false;
     setCurrentPuzzle(clonePuzzle(dailyPuzzle));
     setRecolors(0);
@@ -319,10 +276,12 @@ function DailyMode() {
       <header className="gameHeading">
         <div>
           <p className="eyebrow">Daily Puzzle</p>
-          <h1>Today's 3Color</h1>
+          <h1>{isPreview ? 'Daily Puzzle Preview' : "Today's 3Color"}</h1>
         </div>
         <p>Connected circles must have different colors.</p>
       </header>
+
+      {progressError && <p role="status">{progressError}</p>}
 
       <section className={`gameLayout ${solved ? "gameLayoutSolved" : ""}`}>
         <div className="gamePanel">
@@ -363,9 +322,9 @@ function DailyMode() {
             <div className="completionCard" role="status" aria-live="polite">
               <div className="completionBadge">✓</div>
 
-              <p className="completionEyebrow">Daily Puzzle Complete</p>
+              <p className="completionEyebrow">{isPreview ? "Daily Preview Complete" : "Daily Puzzle Complete"}</p>
 
-              <h3>You completed today&apos;s puzzle.</h3>
+              <h3>{isPreview ? "This test result stays in your preview session." : "You completed today’s puzzle."}</h3>
 
               <div className="completionStats">
                 <div>
@@ -396,12 +355,12 @@ function DailyMode() {
                   Replay Daily Puzzle
                 </button>
 
-                <button
+                {!isPreview && <button
                   className="completionPrimaryButton"
                   onClick={handleShareResult}
                 >
                   Share Result
-                </button>
+                </button>}
               </div>
 
               {shareMessage && <p className="shareMessage">{shareMessage}</p>}
@@ -415,7 +374,8 @@ function DailyMode() {
             onVertexClick={handleVertexClick}
             width={currentPuzzle.width}
             height={currentPuzzle.height}
-            colorTheme={activeTheme}
+            colorTheme={usePuzzleTheme ? dailyPuzzle.theme : activeTheme}
+            design={dailyPuzzle.design}
             toolbar={
               <SoundToggle
                 soundEnabled={soundEnabled}
@@ -445,9 +405,12 @@ function DailyMode() {
             <button onClick={handleResetColors}>Reset Puzzle</button>
 
             <GameSettings
-                selectedThemeId={selectedThemeId}
-                onThemeChange={setSelectedThemeId}
-                activeTheme={activeTheme}
+                selectedThemeId={usePuzzleTheme ? dailyPuzzle.theme.id : selectedThemeId}
+                onThemeChange={(themeId) => {
+                  setUsePuzzleTheme(false);
+                  setSelectedThemeId(themeId);
+                }}
+                activeTheme={usePuzzleTheme ? dailyPuzzle.theme : activeTheme}
                 customTheme={customTheme}
                 onCustomThemeChange={setCustomTheme}
             />

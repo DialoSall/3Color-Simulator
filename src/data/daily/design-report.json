@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "preserveThrough": "2026-11-04",
+  "start": "2026-11-05",
+  "end": "2027-11-03",
+  "count": 364,
+  "counts": {
+    "Expert": 91,
+    "Hard": 218,
+    "Challenging": 55
+  },
+  "motifs": {
+    "butterfly": 17,
+    "crown": 17,
+    "heart": 17,
+    "sailboat": 17,
+    "lantern": 17,
+    "umbrella": 17,
+    "kite": 17,
+    "mountain": 17,
+    "turtle": 17,
+    "robot": 17,
+    "pine-tree": 17,
+    "diamond": 17,
+    "fish": 16,
+    "cat": 16,
+    "hourglass": 16,
+    "castle": 16,
+    "rocket": 16,
+    "crab": 16,
+    "owl": 16,
+    "coffee-cup": 16,
+    "star": 16,
+    "mushroom": 16
+  },
+  "candidatesExamined": 10200
+}

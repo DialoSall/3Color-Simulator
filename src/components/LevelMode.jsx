@@ -64,9 +64,11 @@ function getLevelIndexFromParam(levelId) {
   return parsedLevelId - 1;
 }
 
-function LevelMode() {
+function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {}) {
   const navigate = useNavigate();
-  const { levelId } = useParams();
+  const params = useParams();
+  const isPreview = import.meta.env.DEV && preview;
+  const levelId = isPreview ? previewLevelId : params.levelId;
 
   const requestedStartingIndex = getLevelIndexFromParam(levelId);
   const safeStartingIndex = Math.min(
@@ -82,7 +84,7 @@ function LevelMode() {
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
   const [lastVertexId, setLastVertexId] = useState(null);
   const [highestCompleted, setHighestCompleted] = useState(
-    getSavedHighestCompleted
+    () => isPreview ? -1 : getSavedHighestCompleted()
   );
 
   const [elapsedMilliseconds, setElapsedMilliseconds] = useState(0);
@@ -140,7 +142,7 @@ function LevelMode() {
   }, [timerRunning, solved]);
 
 
-  const highestUnlocked = Math.min(
+  const highestUnlocked = isPreview ? levels.length - 1 : Math.min(
     Math.max(highestCompleted + 1, solved ? levelIndex + 1 : 0),
     levels.length - 1
   );
@@ -155,7 +157,8 @@ function LevelMode() {
     const requestedIndex = getLevelIndexFromParam(levelId);
 
     if (requestedIndex < 0 || requestedIndex >= levels.length) {
-      navigate("/levels/1", { replace: true });
+      if (isPreview) onPreviewLevelChange?.(1);
+      else navigate("/levels/1", { replace: true });
       return;
     }
 
@@ -177,12 +180,14 @@ function LevelMode() {
     setTimerRunning(false);
     setResets(0);
     completionSoundPlayedRef.current = false;
-  }, [levelId, highestUnlocked, levelIndex, navigate]);
+  }, [levelId, highestUnlocked, levelIndex, navigate, isPreview, onPreviewLevelChange]);
 
   useEffect(() => {
     if (!solved) {
       return;
     }
+
+    if (isPreview) return;
 
     setHighestCompleted((previousHighest) => {
       const nextHighest = Math.max(previousHighest, levelIndex);
@@ -196,7 +201,7 @@ function LevelMode() {
 
       return nextHighest;
     });
-  }, [solved, levelIndex]);
+  }, [solved, levelIndex, isPreview]);
 
   useEffect(() => {
     if (!solved) {
@@ -253,7 +258,8 @@ function LevelMode() {
 
     playSound("level");
 
-    navigate(`/levels/${levels[nextIndex].id}`);
+    if (isPreview) onPreviewLevelChange?.(levels[nextIndex].id);
+    else navigate(`/levels/${levels[nextIndex].id}`);
 
     setLevelIndex(nextIndex);
     setCurrentLevel(cloneLevel(levels[nextIndex]));
@@ -481,8 +487,8 @@ function LevelMode() {
 
                   <h3>
                     {levelIndex === levels.length - 1
-                      ? "You finished every level."
-                      : `Level ${levelIndex + 2} unlocked.`}
+                      ? (isPreview ? "Preview complete." : "You finished every level.")
+                      : isPreview ? "Preview complete. Your campaign progress is unchanged." : `Level ${levelIndex + 2} unlocked.`}
                   </h3>
 
                   <div className="completionStats">
