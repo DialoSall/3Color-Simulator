@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { addDailyDays, getDailyDateKey, millisecondsUntilNextDaily, parseDateKey } from '../src/utils/dailyDate.js';
-import { dailyPuzzles, dailySchedule, getDailyPuzzle, getDailyPuzzleForDate, MissingDailyPuzzleError } from '../src/data/dailyPuzzles.js';
+import { dailyPuzzles, dailySchedule, getDailyPuzzle, getDailyPuzzleForDate, MissingDailyPuzzleError } from './lib/dailyCatalog.js';
 import { generatedDailyPuzzles } from '../src/data/daily/generated/index.js';
 import { handcraftedPuzzles } from '../src/data/daily/handcrafted.js';
 import { dailyOverrides } from '../src/data/daily/overrides.js';

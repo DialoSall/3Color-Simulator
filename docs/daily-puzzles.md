@@ -7,10 +7,13 @@ arithmetic and next-midnight calculation. DST days can be 23 or
 25 hours. DailyMode also refreshes on wake/focus and remounts the game when the
 canonical day changes; it does not carry a timer or colors into the next puzzle.
 
-`src/data/dailyPuzzles.js` performs exact date lookup and freezes the returned
-records. It imports the monthly original/designed generated files, historical handcrafted records,
-explicit historical schedule, and future overrides. A missing date raises
-`MissingDailyPuzzleError`; DailyMode displays an unavailable message. There is no
+`src/data/dailyIndex.js` performs synchronous exact metadata lookup without graph
+payloads. `src/data/dailyPuzzles.js` provides asynchronous graph lookup, fetching
+only the selected content-hashed month and freezing the returned record. The full
+source catalog lives in Node-only `scripts/lib/dailyCatalog.js`, which combines
+the original/designed banks, historical records/schedule, and overrides for
+validation and authoring. A missing date raises `MissingDailyPuzzleError`;
+DailyMode displays an unavailable message. There is no
 random generation, rolling latest-puzzle fallback, or external dependency for
 official Daily selection.
 
@@ -152,8 +155,10 @@ are excluded before selection. Observed minima are 113.952 and 34.002 units.
 Isomorphism-invariant Weisfeiler–Leman signatures reject matching topologies,
 including vertex relabelings. This conservatively rejects possible duplicates;
 it cannot accept an isomorphic duplicate. Solver limits reject expensive cases.
-Both frozen banks are bundled and PWA-cached, which increases the initial JS
-bundle (currently about 1.42 MB minified / 282 KB gzip); lazy delivery can be considered separately.
+Both frozen source banks remain checked in for validation/reproduction. Only
+effective scheduled records are emitted as monthly runtime JSON; they are outside
+the initial JS and PWA precache. See [Daily loading](daily-loading.md) for caching,
+offline behavior, API compatibility, and production measurements.
 
 ## Integrity and future handcrafted puzzles
 
@@ -171,13 +176,15 @@ periods, underscores, colons, or hyphens. Then run:
 ```bash
 npm run schedule:daily -- path/to/handcrafted-puzzle.json
 npm run validate:daily
+npm run generate:daily-runtime
 npm run build
 ```
 
 The command validates the graph and requires a **strictly future** date in the
 bank. It updates only `overrides.js` and the integrity ledger, retaining the
 underlying generated safety-net record. Today/past dates and reused IDs are
-rejected. Review and publish those two files together. Do not hand-edit the
+rejected. Refresh the derived runtime index/payloads, then review and publish
+them with the override and ledger. Build checks reject stale derived files. Do not hand-edit the
 ledger, historical snapshot, or generated data. IDs and published graph content
 must never be recycled. The checks protect normal authoring workflows; trusted
 repository owners can still deliberately edit both the data and its locks.

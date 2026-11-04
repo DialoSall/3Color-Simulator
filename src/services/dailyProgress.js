@@ -1,4 +1,4 @@
-import { handcraftedPuzzles } from "../data/daily/handcrafted.js";
+import { legacyDailyMetadata } from "../data/dailyIndex.js";
 import { parseDateKey } from "../utils/dailyDate.js";
 
 export const DAILY_PROGRESS_KEY = "3color-daily-progress-v1";
@@ -56,7 +56,7 @@ function legacyPuzzleId(dateKey, result) {
   if (typeof result.sourceLevelId === 'string' && /^[a-z\d][a-z\d:._-]*$/i.test(result.sourceLevelId)) return result.sourceLevelId;
   // This reproduces the OLD UTC selector only for migration. Official schedule
   // lookup never falls back. Keep the old date labels; do not shift saved results.
-  return [...handcraftedPuzzles].reverse().find(puzzle=>puzzle.dateKey<=dateKey)?.id ?? `legacy-${dateKey}`;
+  return [...legacyDailyMetadata].reverse().find(puzzle=>puzzle.dateKey<=dateKey)?.id ?? `legacy-${dateKey}`;
 }
 
 function getRecord(schema, puzzle) {

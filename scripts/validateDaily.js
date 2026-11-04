@@ -1,7 +1,7 @@
 import { designedDailyPuzzles } from "../src/data/daily/designed/index.js";
 import { dailyDesignBankConfig } from "../src/data/daily/designConfig.js";
 import { readFile } from "node:fs/promises";
-import { dailyPuzzles, dailySchedule } from "../src/data/dailyPuzzles.js";
+import { dailyPuzzles, dailySchedule } from "./lib/dailyCatalog.js";
 import { generatedDailyPuzzles } from "../src/data/daily/generated/index.js";
 import { dailyOverrides } from "../src/data/daily/overrides.js";
 import { dailyBankConfig as config } from "../src/data/daily/config.js";

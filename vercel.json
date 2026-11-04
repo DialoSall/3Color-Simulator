@@ -1,4 +1,10 @@
 {
+  "headers": [
+    {
+      "source": "/daily/:file(\\d{4}-\\d{2}\\.[a-f0-9]{16}\\.json)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

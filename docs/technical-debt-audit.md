@@ -1,5 +1,9 @@
 # Gameplay cleanup and bundle audit
 
+Follow-up: [Daily loading and offline delivery](daily-loading.md) implements the
+metadata/payload separation recommended below. The measurements here document
+the cleanup baseline before that work.
+
 Measured November 4, 2026, starting from `main` at `c6498e8`, using installed
 Vite 8.0.16. This change removes dead styles and extracts small pure utilities;
 it does not change routes, gameplay orchestration, dependencies, or bank loading.

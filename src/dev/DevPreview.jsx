@@ -4,7 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import DailyMode from "../components/DailyMode.jsx";
 import LevelMode from "../components/LevelMode.jsx";
 import { levels } from "../data/levels.js";
-import { dailySchedule, getDailyPuzzleForDate } from "../data/dailyPuzzles.js";
+import { dailySchedule, getDailyMetadataForDate } from "../data/dailyIndex.js";
+import { useDailyPuzzle } from "../hooks/useDailyPuzzle.js";
 import { getDailyDateKey } from "../utils/dailyDate.js";
 import { createDailyProgressService } from "../services/dailyProgress.js";
 
@@ -17,11 +18,12 @@ function DevPreview() {
   const [copyMessage, setCopyMessage] = useState("");
   const mode = params.get('mode') === 'campaign' ? 'campaign' : 'daily';
   const today = getDailyDateKey();
-  const suggestedDate = dates.find(date=>date>=today && getDailyPuzzleForDate(date).design) ?? today;
+  const suggestedDate = dates.find(date=>date>=today && getDailyMetadataForDate(date).hasDesign) ?? today;
   const requestedDate = params.get('date') ?? suggestedDate;
   const date = dates.includes(requestedDate) ? requestedDate : dates[0];
   const levelId = Math.max(1, Math.min(levels.length, Number(params.get('level')) || 1));
-  const puzzle = mode === 'daily' ? getDailyPuzzleForDate(date) : levels.find(level=>level.id===levelId) ?? levels[0];
+  const loaded = useDailyPuzzle(mode === 'daily' ? date : null);
+  const puzzle = mode === 'daily' ? loaded.puzzle ?? getDailyMetadataForDate(date) : levels.find(level=>level.id===levelId) ?? levels[0];
   const index = mode === 'daily' ? dates.indexOf(date) : puzzle.id-1;
   const count = mode === 'daily' ? dates.length : levels.length;
   function chooseMode(value) {
@@ -51,14 +53,14 @@ function DevPreview() {
           {mode==='daily' ? <label>Daily date<input type="date" min={dates[0]} max={dates.at(-1)} value={date} onChange={event=>chooseDate(event.target.value)} /></label>
             : <label>Campaign level<select value={puzzle.id} onChange={event=>chooseLevel(Number(event.target.value))}>{levels.map(level=><option key={level.id} value={level.id}>{level.id} · {level.name}</option>)}</select></label>}
           <div className="devPreviewNavigation"><button disabled={index===0} onClick={()=>step(-1)}>← Previous</button><span>{index+1} / {count}</span><button disabled={index===count-1} onClick={()=>step(1)}>Next →</button></div>
-          <button onClick={copyPuzzle}>Copy puzzle JSON</button>
+          <button disabled={mode === 'daily' && !loaded.puzzle} onClick={copyPuzzle}>Copy puzzle JSON</button>
           <button onClick={()=>{setProgressService(createDailyProgressService({storage:null}));setRevision(value=>value+1);}}>Reset test progress</button>
         </div>
         <dl className="devPreviewMetadata">
           <div><dt>Puzzle ID</dt><dd><code>{puzzle.id}</code></dd></div>
           <div><dt>Difficulty</dt><dd>{puzzle.difficulty}</dd></div>
           <div><dt>Design</dt><dd>{puzzle.design?.name ?? (puzzle.theme?.name || 'Original layout')}</dd></div>
-          <div><dt>Graph</dt><dd>{puzzle.vertices.length} circles · {puzzle.edges.length} connections</dd></div>
+          <div><dt>Graph</dt><dd>{puzzle.vertices ? `${puzzle.vertices.length} circles · ${puzzle.edges.length} connections` : "Loading graph…"}</dd></div>
           {puzzle.metrics && <div><dt>Solver score</dt><dd>{puzzle.metrics.score}</dd></div>}
         </dl>
         <p role="status" className="devPreviewMessage">{copyMessage}</p>

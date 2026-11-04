@@ -5,7 +5,7 @@ import { renderToString } from "react-dom/server";
 import { createServer } from "vite";
 import { DAILY_LAUNCH_DATE } from "../src/utils/dailyDate.js";
 import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getCalendarMonth, getDailyStreaks, getPublicDailyHistory, shiftCalendarMonth } from "../src/utils/dailyRetention.js";
-import { dailySchedule, getDailyPuzzleForDate } from "../src/data/dailyPuzzles.js";
+import { dailySchedule, getDailyPuzzleForDate } from "./lib/dailyCatalog.js";
 import { generatedDailyPuzzles } from "../src/data/daily/generated/index.js";
 import { DAILY_PROGRESS_KEY, LEGACY_DAILY_KEY, createDailyProgressService } from "../src/services/dailyProgress.js";
 

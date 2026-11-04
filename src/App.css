@@ -94,6 +94,14 @@ select {
 .homeGraph circle { fill: var(--surface); stroke: var(--preview-accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .homePreviewPalette { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
 .homePreviewPalette span { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); }
+.dailyPreviewPlaceholder { position: relative; pointer-events: auto; color: var(--muted); font-size: 0.85rem; }
+.dailyPreviewPlaceholder .homeGraph { display: grid; place-items: center; }
+.dailyPreviewPlaceholder .homePreviewPalette { visibility: hidden; }
+.dailyPreviewPlaceholder .dailyLoadRetry { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); }
+.dailyLoadRetry { width: auto; margin: 8px 0; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 0.85rem; }
+.dailyLoading { min-height: max(400px, calc(100svh - 290px)); padding: 24px; }
+.dailyLoading h2 { margin: 0 0 16px; }
+.dailyLoading p { color: var(--muted); }
 .homeDailyStreak { margin: 0; min-height: 22px; color: var(--text); font-size: 0.95rem; font-weight: 650; line-height: 1.5; }
 .homeDailyBest { color: var(--muted); font-size: 0.82rem; font-weight: 450; white-space: nowrap; }
 .homeActions { max-width: 320px; margin: 18px auto 12px; }

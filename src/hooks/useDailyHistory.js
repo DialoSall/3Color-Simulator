@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DAILY_LAUNCH_DATE } from "../utils/dailyDate.js";
-import { dailySchedule } from "../data/dailyPuzzles.js";
+import { dailySchedule } from "../data/dailyIndex.js";
 import { getPublicDailyHistory } from "../utils/dailyRetention.js";
 
 export function useDailyHistory(today, service, enabled) {
