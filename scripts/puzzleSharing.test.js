@@ -128,7 +128,7 @@ test("the game renders a seeded graph with exact SVG geometry and recovers from 
     }
     assert.equal((html.match(/fill="var\(--uncolored-vertex\)"/g) ?? []).length, 3);
     assert.match(render("/custom?seed=invalid"), /invalid or unsupported/);
-    assert.match(render("/"), /Start Challenge/);
+    assert.match(render("/"), /Play Today&#x27;s Puzzle/);
   } finally {
     await vite.close();
   }

@@ -17,6 +17,7 @@
     "schedule:daily": "node scripts/scheduleDaily.js",
     "test:daily": "node --test scripts/dailyFoundation.test.js",
     "test:retention": "node --test scripts/dailyRetention.test.js",
+    "test:homepage": "node --test scripts/homepage.test.js",
     "generate:daily-designs": "node scripts/generateDesignedDaily.js",
     "check:daily-designs": "node scripts/generateDesignedDaily.js --check",
     "check:launch-fox": "node scripts/launchFoxOverride.js --check",
