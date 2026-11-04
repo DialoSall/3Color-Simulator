@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import GraphCanvas from "./GraphCanvas";
 import { getConflicts, isSolved } from "../utils/graphValidation";
-import { getDailyPuzzleForDate, MissingDailyPuzzleError } from "../data/dailyPuzzles";
+import { dailySchedule, getDailyPuzzleForDate, MissingDailyPuzzleError } from "../data/dailyPuzzles";
 import { useDailyDate } from "../hooks/useDailyDate";
 import { useDailyProgress } from "../hooks/useDailyProgress";
 import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
+import DailyCalendar from "./DailyCalendar";
+import { useDailyHistory } from "../hooks/useDailyHistory";
+import { dailyProgressService } from "../services/dailyProgress";
+import { DAILY_LAUNCH_DATE } from "../utils/dailyDate";
+import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getDailyStreaks } from "../utils/dailyRetention";
+import { trackEvent } from "../utils/analytics";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const DAILY_URL = "https://3color.app/daily";
@@ -34,31 +40,62 @@ function formatTime(totalMilliseconds) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function DailyMode({ progressService, previewDateKey } = {}) {
+function DailyMode({ progressService = dailyProgressService, previewDateKey } = {}) {
   const today = useDailyDate();
   const isPreview = import.meta.env.DEV && Boolean(previewDateKey);
-  const dateKey = isPreview ? previewDateKey : today;
+  const [selectedDate, setSelectedDate] = useState(null);
+  const dateKey = isPreview ? previewDateKey : canSelectDailyDate(selectedDate, today, dailySchedule) ? selectedDate : today;
+  const isToday = dateKey === today;
+  const history = useDailyHistory(today, progressService, !isPreview);
+  const streaks = getDailyStreaks(history.records, today);
+  const todayRecord = history.records.find(record => record.dateKey === today);
+  const todayCredited = todayRecord && earnsDailyStreakCredit(todayRecord, today);
+  const streakLabel = history.loading ? "Loading streak…" : history.error ? "Streak unavailable"
+    : streaks.current === 0 && !todayRecord?.completed ? "Start your streak today"
+    : `${streaks.current} ${streaks.current === 1 ? "day" : "days"}`;
   let puzzle;
   try {
-    puzzle = getDailyPuzzleForDate(dateKey);
+    if (isPreview || today >= DAILY_LAUNCH_DATE) puzzle = getDailyPuzzleForDate(dateKey);
   } catch (error) {
     if (!(error instanceof MissingDailyPuzzleError)) throw error;
-    return (
-      <main className="app gameApp">
-        <header className="gameHeading"><h1>Today's 3Color</h1></header>
-        <p role="status">The Daily puzzle for {dateKey} is unavailable. Please check back later.</p>
-      </main>
-    );
   }
-  return <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} />;
+
+  function chooseDate(date, source = "calendar") {
+    if (!canSelectDailyDate(date, today, dailySchedule)) return;
+    if (date < today) trackEvent("daily_history_select", { date_key: date });
+    else if (!isToday) trackEvent("daily_return_today", { from_date: dateKey, source });
+    setSelectedDate(date === today ? null : date);
+  }
+
+  return <main className="app gameApp">
+    <header className="gameHeading">
+      <div><p className="eyebrow">Daily Puzzle</p><h1>{isPreview ? "Daily Puzzle Preview" : isToday ? "Today's 3Color" : "Past Daily Puzzle"}</h1></div>
+      <p>Connected circles must have different colors.</p>
+    </header>
+    {isPreview ? <p className="eyebrow">{formatDailyDate(dateKey)}</p> : today >= DAILY_LAUNCH_DATE && <div className="dailyRetentionBar">
+      <DailyCalendar dateKey={dateKey} today={today} records={history.records} loading={history.loading} error={history.error} schedule={dailySchedule}
+        onSelect={chooseDate} onOpen={() => { history.refresh(); trackEvent("daily_calendar_open", { date_key: dateKey }); }} />
+      {!isToday && <button type="button" className="dailyTodayButton" onClick={() => chooseDate(today, "button")}>Back to Today</button>}
+      <div className="dailyStreaks" role="group" aria-label="Daily streaks">
+        <strong className="dailyStreakCurrent" aria-label={`Current streak: ${streakLabel}`}>
+          <span aria-hidden="true">🔥</span>{" "}{streakLabel}
+        </strong>
+        <span className="dailyStreakBest">Best: {history.loading ? "…" : history.error ? "—" : `${streaks.best} ${streaks.best === 1 ? "day" : "days"}`}</span>
+      </div>
+    </div>}
+    {!isPreview && history.error && <p role="status">{history.error}</p>}
+    {puzzle ? <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} isToday={isToday} onCompletionSaved={history.refresh}
+      currentStreak={!history.loading && !history.error && todayCredited ? streaks.current : 0} />
+      : <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : `The Daily puzzle for ${formatDailyDate(dateKey)} is unavailable. Please check back later.`}</p>}
+  </main>;
 }
 
-function DailyGame({ dailyPuzzle, progressService, preview }) {
+function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletionSaved, currentStreak }) {
   const isPreview = import.meta.env.DEV && preview;
   const {
     bestResult: savedCompletion, progressError, recordMove, recordReset,
     completeAttempt, replayAttempt,
-  } = useDailyProgress(dailyPuzzle, progressService);
+  } = useDailyProgress(dailyPuzzle, progressService, onCompletionSaved);
   const [usePuzzleTheme, setUsePuzzleTheme] = useState(Boolean(dailyPuzzle.theme));
   const [currentPuzzle, setCurrentPuzzle] = useState(() =>
     clonePuzzle(dailyPuzzle)
@@ -239,7 +276,7 @@ function DailyGame({ dailyPuzzle, progressService, preview }) {
       resets,
     };
 
-    const text = `I completed today's 3Color puzzle in ${formatTime(
+    const text = `I completed ${isToday ? "today's 3Color puzzle" : `the 3Color puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}`} in ${formatTime(
       resultToShare.timeMilliseconds
     )} with ${resultToShare.recolors} recolors and ${
       resultToShare.resets
@@ -272,25 +309,13 @@ function DailyGame({ dailyPuzzle, progressService, preview }) {
   }
 
   return (
-    <main className="app gameApp">
-      <header className="gameHeading">
-        <div>
-          <p className="eyebrow">Daily Puzzle</p>
-          <h1>{isPreview ? 'Daily Puzzle Preview' : "Today's 3Color"}</h1>
-        </div>
-        <p>Connected circles must have different colors.</p>
-      </header>
-
+    <>
       {progressError && <p role="status">{progressError}</p>}
 
       <section className={`gameLayout ${solved ? "gameLayoutSolved" : ""}`}>
         <div className="gamePanel">
           <div className="levelHeader">
             <div>
-              <p className="eyebrow">
-                {dailyPuzzle.dateKey} · Daily #{dailyPuzzle.dailyNumber}
-              </p>
-
               <h2>{dailyPuzzle.name}</h2>
               <p>{dailyPuzzle.description}</p>
             </div>
@@ -324,7 +349,12 @@ function DailyGame({ dailyPuzzle, progressService, preview }) {
 
               <p className="completionEyebrow">{isPreview ? "Daily Preview Complete" : "Daily Puzzle Complete"}</p>
 
-              <h3>{isPreview ? "This test result stays in your preview session." : "You completed today’s puzzle."}</h3>
+              <h3>{isPreview ? "This test result stays in your preview session." : isToday ? "You completed today’s puzzle." : `You completed the puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}.`}</h3>
+
+              {!isPreview && isToday && currentStreak > 0 && <div className="dailyStreakReinforcement">
+                <strong><span aria-hidden="true">🔥</span>{" "}{currentStreak === 1 ? "Streak started!" : `${currentStreak}-day streak!`}</strong>
+                <p>Come back tomorrow to keep it going.</p>
+              </div>}
 
               <div className="completionStats">
                 <div>
@@ -391,14 +421,14 @@ function DailyGame({ dailyPuzzle, progressService, preview }) {
             <p className="eyebrow">Daily Status</p>
 
             <div className={savedCompletion ? "statusBox solved" : "statusBox"}>
-              <h3>{savedCompletion ? "Completed Today" : "Not Completed Yet"}</h3>
+              <h3>{savedCompletion ? (isToday ? "Completed Today" : "Completed") : "Not Completed Yet"}</h3>
 
               <p>
                 {savedCompletion
-                  ? `Your best time today is ${formatTime(
+                  ? `Your best time${isToday ? " today" : ""} is ${formatTime(
                       savedCompletion.timeMilliseconds
                     )}.`
-                  : "Solve today's puzzle to save your result on this device."}
+                  : `Solve ${isToday ? "today's" : "this"} puzzle to save your result on this device.${!isToday ? " Late solves count as completed, but do not repair a streak." : ""}`}
               </p>
             </div>
 
@@ -418,7 +448,7 @@ function DailyGame({ dailyPuzzle, progressService, preview }) {
           </aside>
         )}
       </section>
-    </main>
+    </>
   );
 }
 

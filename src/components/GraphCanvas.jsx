@@ -215,7 +215,7 @@ function GraphCanvas({
               className={`vertexGroup ${dimmed ? "dimmedVertexGroup" : ""} ${!interactive ? "guidanceDimmedVertex" : ""}`}
               role="button"
               tabIndex={0}
-              aria-label={`Circle ${vertex.id}, ${vertex.color ?? "uncolored"}, ${connectionCount} connections. ${interactive ? "Press Enter or Space to change color." : "Currently unavailable for coloring."}`}
+              aria-label={`Circle, ${vertex.color ?? "uncolored"}, ${connectionCount} connections. ${interactive ? "Press Enter or Space to change color." : "Currently unavailable for coloring."}`}
               aria-disabled={!interactive || undefined}
               aria-describedby={guidance ? guidanceId : undefined}
               onFocus={(event) => {

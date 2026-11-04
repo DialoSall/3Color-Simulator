@@ -3,7 +3,7 @@
 ## Schedule and identity
 
 `src/utils/dailyDate.js` owns the official America/New_York date, date-label
-arithmetic, Daily numbering, and next-midnight calculation. DST days can be 23 or
+arithmetic and next-midnight calculation. DST days can be 23 or
 25 hours. DailyMode also refreshes on wake/focus and remounts the game when the
 canonical day changes; it does not carry a timer or colors into the next puzzle.
 
@@ -28,13 +28,37 @@ version/source/difficulty metadata is additive. The old repeating schedule from
 the repeated IDs. It is never extended. These historical exceptions predate the
 one-new-ID-per-date generated bank.
 
+The player-facing launch is **November 4, 2026**, with **Fox Face** under the new
+handcrafted override ID `daily-2026-11-04-fox-v2` (version 2). Its vertices, edges,
+name, description, dimensions, and Fox palette match historical `daily-002`, which
+remains unchanged. The owner-authorized exception is pinned in
+`scripts/launchFoxOverride.js`; `npm run check:launch-fox` verifies the record and
+integrity lock. Normal scheduling still rejects today/past dates. Original
+`daily-2026-11-04-v1` remains in the frozen safety bank, and any progress for that
+ID stays separate: it cannot mark the launch Fox completed or earn Fox streak credit.
+
+The compact calendar on `/daily`
+only selects scheduled dates from launch through today's New York date. Historical
+compatibility data stays internal; no puzzle numbers or dated archive routes are
+exposed. Past puzzles use the same graph lookup, progress hook, and gameplay.
+
+`dailyRetention.js` derives current/best streaks from `firstCompletedAt`, converted
+to America/New_York. Only first completions on the puzzle's own date earn credit;
+late solves still mark the calendar completed. Pre-launch, future, mismatched
+legacy puzzle IDs, and estimated migration timestamps cannot earn credit. An
+incomplete today preserves yesterday's consecutive run. No streak state is stored.
+The calendar supports keyboard navigation, Escape/outside dismissal, and focus
+restoration. Calendar open, past selection, and return-to-Today events reuse
+`trackEvent`; selection keeps the route unchanged.
+
 ## Recognizable designs and development review
 
 The original year-long bank remains frozen as an offline safety/reference bank.
-The November 4 puzzle remains `daily-2026-11-04-v1`. All 364 later dates use new
-`daily-YYYY-MM-DD-design-v2` identities with `version: 2`; no historical/current
-puzzle was replaced. The effective schedule still has 55 Challenging, 219 Hard,
-and 91 Expert puzzles, since each replacement keeps that date's difficulty band.
+The original November 4 record remains `daily-2026-11-04-v1`, beneath the launch
+Fox override. All 364 later dates use `daily-YYYY-MM-DD-design-v2` identities with
+`version: 2`, preserving each future date's difficulty band. With the Expert Fox
+replacing the Hard launch puzzle, the effective year has 55 Challenging, 218 Hard,
+and 92 Expert puzzles; the original safety bank's calibrated quotas are unchanged.
 
 `scripts/lib/dailyDesigns.js` contains 22 authored motifs: Rocket, Owl, Butterfly,
 Sailboat, Pine Tree, Fish, Cat, Turtle, Crab, Robot, Star, Heart, Crown, Kite,
@@ -164,7 +188,10 @@ do not regenerate or modify the existing year's published puzzles.
 ## Progress storage and migration
 
 `src/services/dailyProgress.js` supplies Promise-based getProgress,
-recordActivity, and completeAttempt methods. `useDailyProgress` serializes
+recordActivity, completeAttempt, and inclusive `getHistory({ startDate, endDate })`
+methods. The history query returns records without exposing the storage schema;
+`useDailyHistory` filters them against the public schedule and refreshes on saved
+completion, calendar open, focus/visibility, and storage events. `useDailyProgress` serializes
 operations and keeps persistence concerns out of DailyMode. A future authenticated
 adapter can implement the same methods; `mergeDailyProgress` unions attempts by
 client ID and applies the same best-result comparison. No accounts/backend exist.

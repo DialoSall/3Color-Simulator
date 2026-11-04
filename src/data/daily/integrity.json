@@ -731,7 +731,8 @@
     "daily-2027-10-31-design-v2": "2b9122ad8f567f665ee1b2c19522e073adb977636cbb518e891cdb274c0c1161",
     "daily-2027-11-01-design-v2": "fee5690e36a741106a14a10820b3894c99c0649d227bd0d376851a6bc5268431",
     "daily-2027-11-02-design-v2": "c0b514e08341c8b653806c8f25c286cbcee646d48ff530f1f0db59bad3ef25b2",
-    "daily-2027-11-03-design-v2": "413d3d0f8d36745d6a7ee6454daebce8c8a6ad1c494b8151ada7fa5d82baad0a"
+    "daily-2027-11-03-design-v2": "413d3d0f8d36745d6a7ee6454daebce8c8a6ad1c494b8151ada7fa5d82baad0a",
+    "daily-2026-11-04-fox-v2": "968be4d2300f8eb95e07be639685dd7efda092a312ab2f9a7875e51e87bc4754"
   },
   "schedule": {
     "2026-09-03": "daily-001",
@@ -796,7 +797,7 @@
     "2026-11-01": "daily-002",
     "2026-11-02": "daily-002",
     "2026-11-03": "daily-002",
-    "2026-11-04": "daily-2026-11-04-v1",
+    "2026-11-04": "daily-2026-11-04-fox-v2",
     "2026-11-05": "daily-2026-11-05-design-v2",
     "2026-11-06": "daily-2026-11-06-design-v2",
     "2026-11-07": "daily-2026-11-07-design-v2",
