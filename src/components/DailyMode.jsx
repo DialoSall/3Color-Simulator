@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import GraphCanvas from "./GraphCanvas";
+import { cloneGraph, cycleVertexColor, formatGameTime } from "../utils/gameplay";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { dailySchedule, getDailyPuzzleForDate, MissingDailyPuzzleError } from "../data/dailyPuzzles";
 import { useDailyDate } from "../hooks/useDailyDate";
@@ -15,30 +16,7 @@ import { DAILY_LAUNCH_DATE } from "../utils/dailyDate";
 import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getDailyStreaks } from "../utils/dailyRetention";
 import { trackEvent } from "../utils/analytics";
 
-const colorCycle = [null, "red", "blue", "yellow"];
 const DAILY_URL = "https://3color.app/daily";
-
-function clonePuzzle(puzzle) {
-  return {
-    ...puzzle,
-    vertices: puzzle.vertices.map((vertex) => ({ ...vertex })),
-    edges: puzzle.edges.map((edge) => [...edge]),
-  };
-}
-
-function formatTime(totalMilliseconds) {
-  const totalSeconds = Math.floor(totalMilliseconds / 1000);
-
-  if (totalSeconds < 60) {
-    const milliseconds = totalMilliseconds % 1000;
-    return `${totalSeconds}.${String(milliseconds).padStart(3, "0")}`;
-  }
-
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
 
 function DailyMode({ progressService = dailyProgressService, previewDateKey } = {}) {
   const today = useDailyDate();
@@ -98,7 +76,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
   } = useDailyProgress(dailyPuzzle, progressService, onCompletionSaved);
   const [usePuzzleTheme, setUsePuzzleTheme] = useState(Boolean(dailyPuzzle.theme));
   const [currentPuzzle, setCurrentPuzzle] = useState(() =>
-    clonePuzzle(dailyPuzzle)
+    cloneGraph(dailyPuzzle)
   );
 
   const [recolors, setRecolors] = useState(0);
@@ -213,21 +191,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
 
     setLastVertexId(vertexId);
 
-    const cycleVertex = (vertex) => {
-      if (vertex.id !== vertexId) {
-        return vertex;
-      }
-
-      const currentColorIndex = colorCycle.indexOf(vertex.color);
-
-      const nextColor =
-        colorCycle[(currentColorIndex + 1) % colorCycle.length];
-
-      return {
-        ...vertex,
-        color: nextColor,
-      };
-    };
+    const cycleVertex = vertex => cycleVertexColor(vertex, vertexId);
 
     const nextConflictCount = getConflicts(
       currentPuzzle.vertices.map(cycleVertex),
@@ -248,7 +212,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
     playSound("reset");
     replayAttempt();
     completionSoundPlayedRef.current = false;
-    setCurrentPuzzle(clonePuzzle(dailyPuzzle));
+    setCurrentPuzzle(cloneGraph(dailyPuzzle));
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
@@ -262,7 +226,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
     playSound("reset");
     recordReset();
     completionSoundPlayedRef.current = false;
-    setCurrentPuzzle(clonePuzzle(dailyPuzzle));
+    setCurrentPuzzle(cloneGraph(dailyPuzzle));
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
@@ -276,7 +240,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
       resets,
     };
 
-    const text = `I completed ${isToday ? "today's 3Color puzzle" : `the 3Color puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}`} in ${formatTime(
+    const text = `I completed ${isToday ? "today's 3Color puzzle" : `the 3Color puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}`} in ${formatGameTime(
       resultToShare.timeMilliseconds
     )} with ${resultToShare.recolors} recolors and ${
       resultToShare.resets
@@ -324,7 +288,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
           <div className="gameStatsBar">
             <div>
               <span>Time</span>
-              <strong>{formatTime(elapsedMilliseconds)}</strong>
+              <strong>{formatGameTime(elapsedMilliseconds)}</strong>
             </div>
 
             <div>
@@ -360,7 +324,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
                 <div>
                   <span>Best Time</span>
                   <strong>
-                    {formatTime(
+                    {formatGameTime(
                       savedCompletion?.timeMilliseconds ?? elapsedMilliseconds
                     )}
                   </strong>
@@ -425,7 +389,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
 
               <p>
                 {savedCompletion
-                  ? `Your best time${isToday ? " today" : ""} is ${formatTime(
+                  ? `Your best time${isToday ? " today" : ""} is ${formatGameTime(
                       savedCompletion.timeMilliseconds
                     )}.`
                   : `Solve ${isToday ? "today's" : "this"} puzzle to save your result on this device.${!isToday ? " Late solves count as completed, but do not repair a streak." : ""}`}

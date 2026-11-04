@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
+import { cycleVertexColor } from "../utils/gameplay";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import { generateRandomGraph } from "../utils/randomGraph";
 import { createPuzzleUrl, readSharedPuzzle } from "../utils/graphSharing";
@@ -8,8 +9,6 @@ import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
-
-const colorCycle = [null, "red", "blue", "yellow"];
 
 function resetGraphColors(graph) {
   return {
@@ -169,21 +168,7 @@ function handleVertexClick(vertexId) {
 
   setLastVertexId(vertexId);
 
-  const cycleVertex = (vertex) => {
-    if (vertex.id !== vertexId) {
-      return vertex;
-    }
-
-    const currentColorIndex = colorCycle.indexOf(vertex.color);
-
-    const nextColor =
-      colorCycle[(currentColorIndex + 1) % colorCycle.length];
-
-    return {
-      ...vertex,
-      color: nextColor,
-    };
-  };
+  const cycleVertex = vertex => cycleVertexColor(vertex, vertexId);
 
   const nextConflictCount = getConflicts(
     currentGraph.vertices.map(cycleVertex),

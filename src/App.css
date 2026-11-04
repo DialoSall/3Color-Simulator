@@ -21,7 +21,6 @@
   --success-soft: #e7f7ed;
   --on-success: #ffffff;
   --uncolored-vertex: #d5dbe5;
-  --vertex-label: #202938;
 }
 
 :root[data-appearance="dark"] {
@@ -47,7 +46,6 @@
   --success-soft: #193c2e;
   --on-success: #102c1d;
   --uncolored-vertex: #526176;
-  --vertex-label: #ffffff;
 }
 
 * {
@@ -72,11 +70,6 @@ select {
   padding: 48px 5vw;
 }
 
-.hero {
-  max-width: 900px;
-  margin-bottom: 40px;
-}
-
 .eyebrow {
   color: var(--accent);
   font-weight: 800;
@@ -84,21 +77,6 @@ select {
   text-transform: uppercase;
   font-size: 0.78rem;
   margin: 0 0 12px;
-}
-
-.hero h1 {
-  font-size: clamp(4rem, 12vw, 9rem);
-  line-height: 0.9;
-  letter-spacing: -0.06em;
-  margin: 0;
-}
-
-.heroText {
-  color: var(--text-secondary);
-  font-size: clamp(1.1rem, 2vw, 1.5rem);
-  line-height: 1.5;
-  max-width: 700px;
-  font-weight: 500;
 }
 
 /* A single Daily puzzle is the homepage's focus. */
@@ -583,16 +561,6 @@ select {
   filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.2));
 }
 
-.dimmedVertex {
-  opacity: 0.42;
-}
-
-.vertexLabel {
-  font-size: 18px;
-  font-weight: 900;
-  pointer-events: none;
-}
-
 .statusPanel {
   padding: 28px;
   position: sticky;
@@ -612,8 +580,7 @@ select {
   letter-spacing: -0.04em;
 }
 
-.statusBox p,
-.rules p {
+.statusBox p {
   color: var(--text-secondary);
   line-height: 1.6;
   font-weight: 500;
@@ -662,78 +629,6 @@ button {
 
 button:hover {
   background: var(--accent-hover);
-}
-
-.rules {
-  border-top: 1px solid var(--border-strong);
-  padding-top: 20px;
-}
-
-.rules h3 {
-  margin: 0 0 8px;
-  font-size: 1.25rem;
-}
-
-.homeHero {
-  margin-bottom: 56px;
-}
-
-.homeGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 28px;
-}
-
-.modeCard {
-  background: var(--surface);
-  border-radius: 34px;
-  padding: 34px;
-  box-shadow: 0 24px 70px var(--border);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.modeCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 30px 85px var(--border-strong);
-}
-
-.modeCard h2 {
-  font-size: clamp(2.4rem, 5vw, 4.2rem);
-  line-height: 0.95;
-  letter-spacing: -0.05em;
-  margin: 0 0 18px;
-}
-
-.modeCard p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  font-weight: 500;
-  margin-bottom: 28px;
-}
-
-.modeCard button:disabled {
-  background: var(--uncolored-vertex);
-  cursor: not-allowed;
-}
-
-.modeCard button:disabled:hover {
-  background: var(--uncolored-vertex);
-}
-
-.backButton {
-  width: auto;
-  margin-bottom: 36px;
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-}
-
-.backButton:hover {
-  background: var(--page);
 }
 
 .completionCard {
@@ -887,20 +782,6 @@ button:hover {
   box-shadow: 0 24px 70px var(--border);
 }
 
-.levelMapHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-.levelMapHeader h2 {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  letter-spacing: -0.05em;
-}
-
 .levelProgressText {
   margin: 0;
   color: var(--muted);
@@ -993,39 +874,8 @@ button:hover {
   cursor: not-allowed;
 }
 
-.quickInstructions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--accent-soft);
-  border: 1px solid rgba(0, 113, 227, 0.18);
-  border-radius: 18px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
-}
-
-.quickInstructions p {
-  margin: 0;
-  color: var(--text);
-  font-weight: 650;
-  line-height: 1.45;
-}
-
-.instructionIcon {
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--accent);
-  color: white;
-  font-weight: 900;
-}
-
 .graphCanvas,
-.vertexGroup,
-.vertexLabel {
+.vertexGroup {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -1036,7 +886,6 @@ button:hover {
     padding: 34px 4vw;
   }
 
-  .homeGrid,
   .gameLayout {
     grid-template-columns: 1fr;
   }
@@ -1077,26 +926,12 @@ button:hover {
     grid-template-columns: 1fr;
   }
 
-  .levelMapHeader {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .levelGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .levelNavigation {
     grid-template-columns: 1fr;
-  }
-
-  .quickInstructions {
-    align-items: flex-start;
-    padding: 13px 14px;
-  }
-
-  .quickInstructions p {
-    font-size: 0.92rem;
   }
 
   .completionStats {
@@ -1151,12 +986,14 @@ summary:focus-visible, a:focus-visible, .graphViewport:focus-visible {
 .appearanceControl { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--muted); }
 .appearanceControl select { min-width: 0; width: auto; border-radius: 10px; padding: 8px 28px 8px 10px; font-size: 0.82rem; }
 .soundToggleIcon { color: var(--surface); }
-.instructionIcon { color: var(--on-accent); }
 .completionPrimaryButton, .completionBadge { color: var(--on-success); }
 .completionPrimaryButton:hover { background: var(--success); filter: brightness(1.08); }
-.secondaryButton, .backButton,
-.completionSecondaryButton, .secondaryNavigation, .themePresetButton,
-.levelButton, .soundToggle { color: var(--text); }
+.secondaryButton,
+.completionSecondaryButton,
+.secondaryNavigation,
+.themePresetButton,
+.levelButton,
+.soundToggle { color: var(--text); }
 
 /* A compact game shell leaves the screen for the puzzle. */
 .gameApp { max-width: 1440px; min-height: 0; margin: 0 auto; padding: 22px 3vw 48px; }
