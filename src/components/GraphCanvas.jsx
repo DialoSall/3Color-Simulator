@@ -12,16 +12,6 @@ function getVertexRadius(vertexCount) {
   return 25;
 }
 
-function labelColor(hex) {
-  const channels = hex.replace("#", "").match(/.{2}/g);
-  if (channels?.length !== 3) return "#16181d";
-  const [r, g, b] = channels.map((channel) => {
-    const value = parseInt(channel, 16) / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? "#16181d" : "#ffffff";
-}
-
 function GraphCanvas({
   vertices,
   edges,
@@ -32,6 +22,10 @@ function GraphCanvas({
   colorTheme = getThemeById(DEFAULT_THEME_ID),
   toolbar = null,
   design = null,
+  guidance = null,
+  highlightedVertexIds = [],
+  highlightedEdges = [],
+  interactiveVertexIds = null,
 }) {
   const activeTheme = colorTheme ?? getThemeById(DEFAULT_THEME_ID);
   const [hoveredId, setHoveredId] = useState(null);
@@ -48,6 +42,7 @@ function GraphCanvas({
   const pointer = useRef(null);
   const suppressClick = useRef(false);
   const hintId = useId();
+  const guidanceId = useId();
   const solved = vertices.every((vertex) => vertex.color !== null) && conflicts.length === 0;
 
   useLayoutEffect(() => {
@@ -121,6 +116,7 @@ function GraphCanvas({
   const hasActiveVertex = activeId !== null;
   const conflictKeys = new Set(conflicts.map(([a, b]) => getEdgeKey(a, b)));
   const contourKeys = new Set((design?.contourEdges ?? []).map(([a,b])=>getEdgeKey(a,b)));
+  const highlightedKeys = new Set(highlightedEdges.map(([a, b]) => getEdgeKey(a, b)));
   const activeEdgeKeys = new Set();
   const adjacentVertexIds = new Set();
   const verticesById = new Map(vertices.map((vertex) => [vertex.id, vertex]));
@@ -167,6 +163,7 @@ function GraphCanvas({
 
   return (
     <div ref={canvas} className={`graphCanvasWrap ${hasActiveVertex ? "isTracing" : ""} ${design ? "hasDesign" : ""}`}>
+      {guidance && <div id={guidanceId}>{guidance}</div>}
       {toolbar && <div className="graphToolbar">{toolbar}</div>}
       <div className="graphViewport" ref={viewport} tabIndex={0} aria-label="Puzzle canvas. Zoom in for larger circles, then scroll to explore.">
       <div className="graphStage" style={fitSize ? { width: Math.max(fitSize.viewportWidth, fitSize.width * zoom / 100) } : undefined}>
@@ -176,7 +173,7 @@ function GraphCanvas({
         viewBox={`0 0 ${width} ${height}`}
         role="group"
         aria-label="Interactive graph coloring puzzle"
-        aria-describedby={hintId}
+        aria-describedby={guidance ? `${hintId} ${guidanceId}` : hintId}
       >
         <g className="graphEdges" aria-hidden="true">
           {orderedEdges.map(([a, b]) => {
@@ -188,6 +185,7 @@ function GraphCanvas({
             const className = [
               "edge",
               contourKeys.has(key) ? "contourEdge" : "",
+              highlightedKeys.has(key) ? "guidedEdge" : "",
               conflictKeys.has(key) ? "conflictEdge" : "",
               isActive ? "activeEdge" : "",
               hasActiveVertex && !isActive ? "dimmedEdge" : "",
@@ -205,6 +203,8 @@ function GraphCanvas({
           const isActive = vertex.id === activeId;
           const isAdjacent = adjacentVertexIds.has(vertex.id);
           const dimmed = hasActiveVertex && !isActive && !isAdjacent;
+          const highlighted = highlightedVertexIds.includes(vertex.id);
+          const interactive = interactiveVertexIds == null || interactiveVertexIds.includes(vertex.id);
           const fill = vertex.color === null
             ? "var(--uncolored-vertex)"
             : activeTheme.colors[vertex.color] ?? "var(--uncolored-vertex)";
@@ -212,10 +212,12 @@ function GraphCanvas({
           return (
             <g
               key={vertex.id}
-              className={`vertexGroup ${dimmed ? "dimmedVertexGroup" : ""}`}
+              className={`vertexGroup ${dimmed ? "dimmedVertexGroup" : ""} ${!interactive ? "guidanceDimmedVertex" : ""}`}
               role="button"
               tabIndex={0}
-              aria-label={`Circle ${vertex.id}, ${vertex.color ?? "uncolored"}, ${connectionCount} connections. Press Enter or Space to change color.`}
+              aria-label={`Circle ${vertex.id}, ${vertex.color ?? "uncolored"}, ${connectionCount} connections. ${interactive ? "Press Enter or Space to change color." : "Currently unavailable for coloring."}`}
+              aria-disabled={!interactive || undefined}
+              aria-describedby={guidance ? guidanceId : undefined}
               onFocus={(event) => {
                 if (event.currentTarget.matches(":focus-visible")) setFocusedId(vertex.id);
               }}
@@ -235,7 +237,7 @@ function GraphCanvas({
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  if (!event.repeat) onVertexClick(vertex.id);
+                  if (!event.repeat && interactive) onVertexClick(vertex.id);
                 }
               }}
               onClick={(event) => {
@@ -244,10 +246,11 @@ function GraphCanvas({
                   event.preventDefault();
                   return;
                 }
-                onVertexClick(vertex.id);
+                if (interactive) onVertexClick(vertex.id);
               }}
             >
               {isActive && <circle className="vertexFocusRing" cx={vertex.x} cy={vertex.y} r={vertexRadius + 7} />}
+              {highlighted && <circle className="vertexGuidanceRing" cx={vertex.x} cy={vertex.y} r={vertexRadius + 10} />}
               <circle
                 className={`vertex${isAdjacent ? " adjacentVertex" : ""}${isActive ? " focusedVertex" : ""}`}
                 cx={vertex.x}
@@ -255,15 +258,6 @@ function GraphCanvas({
                 r={vertexRadius}
                 fill={fill}
               />
-              <text
-                className="vertexLabel"
-                x={vertex.x}
-                y={vertex.y + 6}
-                textAnchor="middle"
-                fill={vertex.color === null ? "var(--vertex-label)" : labelColor(fill)}
-              >
-                {vertex.id}
-              </text>
             </g>
           );
         })}
@@ -276,7 +270,7 @@ function GraphCanvas({
           <p className="traceStatus" role="status" aria-live="polite">
           {solved
             ? (fullscreen ? "Puzzle complete! Exit to continue." : "Puzzle complete!")
-            : hasActiveVertex ? `Circle ${activeId} · ${adjacentVertexIds.size} connections` : displayMessage}
+            : hasActiveVertex ? `Tracing ${adjacentVertexIds.size} connections` : displayMessage}
           </p>
         </div>
         <div className="graphZoom" role="group" aria-label="Graph zoom">

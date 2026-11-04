@@ -1364,6 +1364,17 @@ summary:focus-visible, a:focus-visible, .graphViewport:focus-visible {
 .adjacentVertex, .focusedVertex { stroke: var(--trace); stroke-width: 3; }
 .dimmedVertexGroup { opacity: 0.22; }
 .vertexFocusRing { fill: none; stroke: var(--trace); stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: none; }
+.vertexGuidanceRing { fill: none; stroke: var(--accent); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; animation: guidancePulse 1.6s ease-in-out infinite; }
+.guidanceDimmedVertex { opacity: 0.4; }
+.guidedEdge { stroke-width: 3; opacity: 1; }
+.tutorialGuidance { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 18px; padding: 14px; border-bottom: 1px solid var(--border); background: var(--surface); border-radius: 14px 14px 0 0; }
+.tutorialGuidance > div { flex: 1; min-width: min(220px, 100%); }
+.tutorialGuidance p { margin: 5px 0; font-size: 0.95rem; font-weight: 650; line-height: 1.5; }
+.tutorialGuidance small { color: var(--muted); font-size: 0.76rem; }
+.tutorialGuidance button, .statusBox .tutorialReplay { width: auto; margin: 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 0.8rem; }
+.statusBox .tutorialReplay { margin-top: 10px; }
+.tutorialReinforcement { margin: 10px 0; color: var(--text); line-height: 1.5; }
+@keyframes guidancePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .graphFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--border); }
 .graphHint { color: var(--muted); font-size: 0.76rem; margin: 0; line-height: 1.5; }
 .traceStatus { color: var(--accent); font-size: 0.76rem; font-weight: 650; margin: 3px 0 0; min-height: 1.2em; }
