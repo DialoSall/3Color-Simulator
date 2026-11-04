@@ -73,7 +73,7 @@ existing reconnect/retry state and working calendar.
 `src/utils/dailyUrl.js` exports `getDailyPath(dateKey)` for client navigation and
 `getDailyUrl(dateKey)` for an absolute `https://3color.app/daily/YYYY-MM-DD` URL.
 These validate the date label; public availability remains DailyMode's policy.
-Result-sharing text and its existing `/daily` link are unchanged for now.
+Daily result sharing uses `getDailyUrl` for the exact puzzle date, including today.
 
 `daily_history_select` fires once per historical route selection, including direct
 links and back/forward, rather than also firing in the calendar handler.
@@ -91,6 +91,29 @@ after building, `npm run test:daily-routes:browser`. The latter requires Node 22
 and installed Chrome (or `CHROME_PATH`), uses a temporary profile/ephemeral port,
 and leaves the normal development server and browser profile untouched. Live
 Vercel deployment behavior still requires checking after publication.
+
+## Daily result sharing
+
+`src/utils/dailyResultSharing.js` builds the spoiler-free result from puzzle
+metadata and the existing saved-best selection, without changing persistence.
+The compact text contains a short date, puzzle name/difficulty, `m:ss` best time,
+and recolors. Resets, puzzle numbers, graph data, and colors are omitted.
+Only today's share can add `🔥 N-day streak`; DailyMode supplies a positive streak
+only after confirming today's on-time credit through its existing history service.
+Historical shares never attach the player's current streak.
+
+Native sharing supplies title `3Color Daily`, the result body, and its dated URL
+as separate Web Share fields. Clipboard and manual-copy fallback append that same
+URL to the same body, once. Native cancellation keeps the previous feedback and
+does not copy or track success; other native failures try the clipboard. If both
+APIs fail, the completion card displays a multiline result for manual copying.
+
+`daily_result_share` fires through `trackEvent` only after a native-share or
+clipboard promise succeeds, with `date_key`, `is_today`, `difficulty`, and
+`share_method` (`native` or `clipboard`). Canceled/failed shares do not emit it.
+Run `npm run test:daily-sharing` for format/API/analytics tests. The production
+browser suite also exercises sharing with API stubs, today's credited streak,
+historical omission, and a slower replay that must retain the saved best.
 
 ## Recognizable designs and development review
 

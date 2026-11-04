@@ -125,6 +125,7 @@ select {
   margin-top: 12px;
   color: var(--success);
   font-weight: 800;
+  white-space: pre-line;
 }
 
 .installPrompt {

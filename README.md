@@ -10,7 +10,7 @@ circles have different colors.
 - **Campaign:** 30 progressive levels, unlocks, and progress saved on this device.
 - **Daily Puzzle:** an exact frozen schedule using America/New_York dates, with
   365 new puzzles from November 4, 2026 through November 3, 2027. Includes locally
-  saved daily best results, attempts, replay, and shareable completion text.
+  saved daily best results, attempts, replay, and compact result sharing with dated links.
   Current/best streaks reward on-time solves. Select the date to revisit missed
   puzzles from the November 4 launch; late solves mark completion without repairing a streak.
   `/daily` follows today; public puzzles also have stable `/daily/YYYY-MM-DD` URLs.
@@ -68,6 +68,7 @@ npm run lint
 npm run build
 npm run validate:levels
 npm run test:sharing
+npm run test:daily-sharing
 npm run validate:daily
 npm run test:daily
 npm run test:retention
@@ -79,8 +80,8 @@ npm run check:daily-designs
 npm run test:preview
 ```
 
-After building, `npm run test:daily-routes:browser` checks real navigation and
-offline reloads using an isolated Chrome profile. Requires Node 22+ and Chrome;
+After building, `npm run test:daily-routes:browser` checks navigation, result sharing,
+and offline reloads using an isolated Chrome profile. Requires Node 22+ and Chrome;
 set `CHROME_PATH` if Chrome is installed elsewhere.
 
 ## Development Preview

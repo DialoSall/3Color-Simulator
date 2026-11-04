@@ -9,6 +9,7 @@ import { getDailyMetadataForDate } from "../src/data/dailyIndex.js";
 import { DAILY_PROGRESS_KEY, createDailyProgressService } from "../src/services/dailyProgress.js";
 import { getDailyPuzzleForDate } from "./lib/dailyCatalog.js";
 import { solveThreeColoring } from "./lib/dailyGraph.js";
+import { buildDailyResultShare } from "../src/utils/dailyResultSharing.js";
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function waitFor(read, description) {
@@ -106,7 +107,7 @@ test("production Daily date routes, navigation, retention, analytics and offline
   const progress = () => ev(`JSON.parse(localStorage.getItem('${DAILY_PROGRESS_KEY}'))`);
   const values = new Map();
   const service = createDailyProgressService({ storage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) } });
-  for (const date of ["2026-11-04", "2026-11-06"]) await service.completeAttempt(getDailyMetadataForDate(date), `fixture-${date}`, { timeMilliseconds: 1000, recolors: 0, resets: 0, completedAt: `${date}T17:00:00Z` });
+  for (const date of ["2026-11-04", "2026-11-06"]) await service.completeAttempt(getDailyMetadataForDate(date), `fixture-${date}`, { timeMilliseconds: 72000, recolors: 0, resets: 0, completedAt: `${date}T17:00:00Z` });
   const original = JSON.parse(values.get(DAILY_PROGRESS_KEY));
   await send("Page.enable");
   await send("Runtime.enable");
@@ -213,6 +214,59 @@ test("production Daily date routes, navigation, retention, analytics and offline
     await button("Reset Puzzle");
     assert.equal(await ev("location.pathname"), "/daily/2026-11-05");
     assert.equal((await progress()).byPuzzleId[puzzle.id]["2026-11-05"].attempts.length, 1);
+  });
+  await t.test("Daily sharing uses saved bests, credited streaks, native cancellation and canonical clipboard fallback", async () => {
+    async function solve(date, slowerThanBest = false) {
+      await select(date);
+      const puzzle = getDailyPuzzleForDate(date);
+      const solution = solveThreeColoring(puzzle, { dynamic: true }).solution;
+      if (slowerThanBest) {
+        await ev("window.__realPerformanceNow = performance.now.bind(performance); window.__timeOffset = 0; performance.now = () => window.__realPerformanceNow() + window.__timeOffset");
+        await ev("document.querySelector('.vertexGroup').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
+        await until("Number(document.querySelectorAll('.gameStatsBar strong')[0].textContent) > 0");
+        await ev("window.__timeOffset = 90000");
+        await until("document.querySelectorAll('.gameStatsBar strong')[0].textContent.startsWith('1:30')");
+      }
+      for (let i = 0; i < puzzle.vertices.length; i++) {
+        for (let color = slowerThanBest && i === 0 ? 1 : 0; color <= solution[puzzle.vertices[i].id]; color++) {
+          await ev(`document.querySelectorAll('.vertexGroup')[${i}].dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
+        }
+      }
+      await until("!!document.querySelector('.completionCard')");
+      if (slowerThanBest) await ev("performance.now = window.__realPerformanceNow");
+    }
+    await ev("window.__shares = []; window.__clipboard = []; Object.defineProperty(navigator, 'share', { configurable: true, writable: true, value: async data => { window.__shares.push(data); } }); Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.__clipboard.push(text); } } })");
+    await solve("2026-11-07");
+    await until("document.querySelector('.dailyStreakReinforcement')?.textContent.includes('2-day streak')");
+    await button("Share Result");
+    await until("document.querySelector('.shareMessage')?.textContent === 'Thanks for sharing!'");
+    const best = (await progress()).byPuzzleId[getDailyMetadataForDate("2026-11-07").id]["2026-11-07"].best;
+    const todayData = buildDailyResultShare({ puzzle: getDailyMetadataForDate("2026-11-07"), result: best, isToday: true, currentStreak: 2 });
+    assert.deepEqual(await ev("window.__shares"), [todayData]);
+    assert.deepEqual(await events("daily_result_share"), [{ date_key: "2026-11-07", is_today: true, difficulty: getDailyMetadataForDate("2026-11-07").difficulty, share_method: "native" }]);
+    await ev("navigator.share = async () => { throw new DOMException('Cancelled', 'AbortError'); }");
+    await button("Share Result");
+    assert.equal((await events("daily_result_share")).length, 1);
+    assert.deepEqual(await ev("window.__clipboard"), []);
+    assert.equal(await ev("document.querySelector('.shareMessage').textContent"), "Thanks for sharing!");
+    await ev("navigator.share = async () => { throw new Error('Native unavailable'); }");
+    await button("Share Result");
+    await until("document.querySelector('.shareMessage')?.textContent === 'Result copied!'");
+    assert.deepEqual(await ev("window.__clipboard"), [`${todayData.text}\n${todayData.url}`]);
+    assert.equal((await events("daily_result_share"))[1].share_method, "clipboard");
+    await ev("navigator.clipboard.writeText = async () => { throw new Error('Clipboard denied'); }");
+    await button("Share Result");
+    await until("document.querySelector('.shareMessage')?.textContent.startsWith('Could not share automatically')");
+    assert.equal(await ev("getComputedStyle(document.querySelector('.shareMessage')).whiteSpace"), "pre-line");
+    assert.equal((await events("daily_result_share")).length, 2);
+    await ev("navigator.share = async data => { window.__shares.push(data); }");
+    await solve("2026-11-04", true);
+    await button("Share Result");
+    await until("document.querySelector('.shareMessage')?.textContent === 'Thanks for sharing!'");
+    assert.deepEqual(await ev("window.__shares[1]"), { title: "3Color Daily", text: "3Color Daily · Nov 4\nFox Face · Expert\n✓ 1:12 · 0 recolors", url: "https://3color.app/daily/2026-11-04" });
+    assert.equal((await events("daily_result_share"))[2].is_today, false);
+    assert.equal((await events("daily_result_share")).length, 3);
+    await select("2026-11-05");
   });
   await t.test("PWA serves direct dated URLs offline; cached months work and uncached history can return to Today", async () => {
     await until("!!navigator.serviceWorker.controller");
