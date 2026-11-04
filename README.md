@@ -13,6 +13,7 @@ circles have different colors.
   saved daily best results, attempts, replay, and shareable completion text.
   Current/best streaks reward on-time solves. Select the date to revisit missed
   puzzles from the November 4 launch; late solves mark completion without repairing a streak.
+  `/daily` follows today; public puzzles also have stable `/daily/YYYY-MM-DD` URLs.
 - **Custom Graph:** generate 3–24 vertices with adjustable edge probability.
   Random graphs are not guaranteed to be 3-colorable.
 - **Seeded sharing:** share the exact custom graph's coordinates, connections,
@@ -71,11 +72,16 @@ npm run validate:daily
 npm run test:daily
 npm run test:retention
 npm run test:daily-loading
+npm run test:daily-routes
 npm run check:daily-runtime
 npm run check:daily-generation
 npm run check:daily-designs
 npm run test:preview
 ```
+
+After building, `npm run test:daily-routes:browser` checks real navigation and
+offline reloads using an isolated Chrome profile. Requires Node 22+ and Chrome;
+set `CHROME_PATH` if Chrome is installed elsewhere.
 
 ## Development Preview
 

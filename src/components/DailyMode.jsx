@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import GraphCanvas from "./GraphCanvas";
 import { cloneGraph, cycleVertexColor, formatGameTime } from "../utils/gameplay";
 import { getConflicts, isSolved } from "../utils/graphValidation";
@@ -16,14 +17,17 @@ import { dailyProgressService } from "../services/dailyProgress";
 import { DAILY_LAUNCH_DATE } from "../utils/dailyDate";
 import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getDailyStreaks } from "../utils/dailyRetention";
 import { trackEvent } from "../utils/analytics";
+import { getDailyPath } from "../utils/dailyUrl";
 
 const DAILY_URL = "https://3color.app/daily";
 
 function DailyMode({ progressService = dailyProgressService, previewDateKey } = {}) {
   const today = useDailyDate();
+  const params = useParams();
+  const navigate = useNavigate();
   const isPreview = import.meta.env.DEV && Boolean(previewDateKey);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const dateKey = isPreview ? previewDateKey : canSelectDailyDate(selectedDate, today, dailySchedule) ? selectedDate : today;
+  const dateKey = isPreview ? previewDateKey : params.dateKey ?? params["*"] ?? today;
+  const available = isPreview || canSelectDailyDate(dateKey, today, dailySchedule);
   const isToday = dateKey === today;
   const history = useDailyHistory(today, progressService, !isPreview);
   const streaks = getDailyStreaks(history.records, today);
@@ -34,18 +38,31 @@ function DailyMode({ progressService = dailyProgressService, previewDateKey } = 
     : `${streaks.current} ${streaks.current === 1 ? "day" : "days"}`;
   let metadata;
   try {
-    if (isPreview || today >= DAILY_LAUNCH_DATE) metadata = getDailyMetadataForDate(dateKey);
+    if (available) metadata = getDailyMetadataForDate(dateKey);
   } catch (error) {
     if (!(error instanceof MissingDailyPuzzleError)) throw error;
   }
   const { puzzle, loading, error, retry } = useDailyPuzzle(metadata ? dateKey : null);
+  // Measure the selected route once, including direct links and back/forward.
+  const previousDate = useRef(null);
+  useEffect(() => {
+    if (!isPreview && available && dateKey < today && previousDate.current !== dateKey) {
+      trackEvent("daily_history_select", { date_key: dateKey });
+    }
+    previousDate.current = dateKey;
+  }, [isPreview, available, dateKey, today]);
 
   function chooseDate(date, source = "calendar") {
     if (!canSelectDailyDate(date, today, dailySchedule)) return;
-    if (date < today) trackEvent("daily_history_select", { date_key: date });
-    else if (!isToday) trackEvent("daily_return_today", { from_date: dateKey, source });
-    setSelectedDate(date === today ? null : date);
+    if (date === today && !isToday) trackEvent("daily_return_today", { date_key: date, from_date: dateKey, source });
+    navigate(source === "button" ? "/daily" : getDailyPath(date));
   }
+
+  if (!metadata) return <main className="app gameApp">
+    <header className="gameHeading"><div><p className="eyebrow">Daily Puzzle</p><h1>Daily Puzzle</h1></div></header>
+    <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : "This Daily puzzle is unavailable."}</p>
+    <Link to="/daily">Back to today's Daily</Link>
+  </main>;
 
   return <main className="app gameApp">
     <header className="gameHeading">
@@ -66,11 +83,11 @@ function DailyMode({ progressService = dailyProgressService, previewDateKey } = 
     {!isPreview && history.error && <p role="status">{history.error}</p>}
     {puzzle ? <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} isToday={isToday} onCompletionSaved={history.refresh}
       currentStreak={!history.loading && !history.error && todayCredited ? streaks.current : 0} />
-      : metadata ? <section className="dailyLoading gamePanel" aria-busy={loading}>
+      : <section className="dailyLoading gamePanel" aria-busy={loading}>
         <h2>{metadata.name}</h2>
         <p role="status">{loading ? "Loading puzzle…" : "This puzzle is not available right now. Reconnect and try again."}</p>
         {error && <button type="button" className="dailyLoadRetry" onClick={retry}>Try again</button>}
-      </section> : <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : `The Daily puzzle for ${formatDailyDate(dateKey)} is unavailable. Please check back later.`}</p>}
+      </section>}
   </main>;
 }
 
