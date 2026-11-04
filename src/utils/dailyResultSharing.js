@@ -1,6 +1,7 @@
 import { formatDailyDate } from "./dailyRetention.js";
 import { getDailyUrl } from "./dailyUrl.js";
 import { trackEvent } from "./analytics.js";
+import { IS_CRAZYGAMES } from "../platform.js";
 
 export function buildDailyResultShare({ puzzle, result, isToday, currentStreak }) {
   const seconds = Math.floor(result.timeMilliseconds / 1000);
@@ -12,7 +13,7 @@ export function buildDailyResultShare({ puzzle, result, isToday, currentStreak }
   ];
   // DailyMode supplies zero until today's on-time credit is confirmed.
   if (isToday && currentStreak > 0) lines.push(`🔥 ${currentStreak}-day streak`);
-  return { title: "3Color Daily", text: lines.join("\n"), url: getDailyUrl(puzzle.dateKey) };
+  return { title: "3Color Daily", text: lines.join("\n"), ...(!IS_CRAZYGAMES ? { url: getDailyUrl(puzzle.dateKey) } : {}) };
 }
 
 export async function shareDailyResult(details, {
@@ -21,7 +22,7 @@ export async function shareDailyResult(details, {
   track = trackEvent,
 } = {}) {
   const shareData = buildDailyResultShare(details);
-  const clipboardText = `${shareData.text}\n${shareData.url}`;
+  const clipboardText = [shareData.text, shareData.url].filter(Boolean).join("\n");
   let method;
   try {
     if (navigatorApi?.share && isSecureContext) {

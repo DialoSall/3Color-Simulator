@@ -1,0 +1,255 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createServer } from "node:http";
+import { spawn } from "node:child_process";
+import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { waitFor, connect, pause } from "./lib/browserHarness.js";
+import { getDailyPuzzleForDate } from "./lib/dailyCatalog.js";
+import { solveThreeColoring } from "./lib/dailyGraph.js";
+import { serializeGraph } from "../src/utils/graphSharing.js";
+
+test("CrazyGames upload works in a cross-origin iframe on a nested plain static host", { timeout: 120000 }, async t => {
+  const prefix = "/uploads/3color/game/";
+  const directory = resolve(dirname(fileURLToPath(import.meta.url)), "../dist-crazygames");
+  const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
+  const game = createServer(async (request, response) => {
+    try {
+      const path = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+      if (!path.startsWith(prefix)) throw new Error("outside upload");
+      const file = resolve(directory, path.slice(prefix.length) || "index.html");
+      if (!file.startsWith(directory + sep)) throw new Error("outside upload");
+      const content = await readFile(file);
+      response.writeHead(200, { "Content-Type": Object.entries(types).find(([extension]) => file.endsWith(extension))?.[1] ?? "application/octet-stream", "Content-Length": content.length });
+      response.end(content);
+    } catch { response.writeHead(404); response.end("Not found; this server has no SPA rewrites."); }
+  });
+  await new Promise(resolve => game.listen(0, "127.0.0.1", resolve));
+  const gameOrigin = `http://127.0.0.1:${game.address().port}`;
+  const gameUrl = `${gameOrigin}${prefix}index.html`;
+  const parent = createServer((request, response) => {
+    response.setHeader("Content-Type", "text/html");
+    response.end(`<html><body style="margin:0"><iframe id="game" src="${gameUrl}" style="border:0;width:907px;height:510px" allow="autoplay; fullscreen; clipboard-write; web-share" allowfullscreen></iframe></body></html>`);
+  });
+  await new Promise(resolve => parent.listen(0, "127.0.0.1", resolve));
+  const profile = await mkdtemp(join(tmpdir(), "3color-crazygames-chrome-"));
+  const candidates = [process.env.CHROME_PATH, "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome", "/usr/bin/chromium"].filter(Boolean);
+  let binary;
+  for (const candidate of candidates) { try { await access(candidate); binary = candidate; break; } catch { /* Try the next installation. */ } }
+  assert.ok(binary, "Install Chrome or set CHROME_PATH.");
+  const chrome = spawn(binary, ["--headless=new", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-sync", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "about:blank"], { stdio: "ignore" });
+  let browser;
+  t.after(async () => {
+    browser?.close();
+    if (chrome.exitCode === null) { const exited = new Promise(resolve => chrome.once("exit", resolve)); chrome.kill("SIGTERM"); await exited; }
+    await Promise.all([new Promise(resolve => game.close(resolve)), new Promise(resolve => parent.close(resolve))]);
+    await rm(profile, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 });
+  });
+  const port = await waitFor(async () => { try { return (await readFile(join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0]; } catch { return null; } }, "Chrome");
+  const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+  const resources = new Map();
+  browser = await connect(pages.find(page => page.type === "page").webSocketDebuggerUrl, event => {
+    const data = event.params;
+    if (event.method === "Network.requestWillBeSent") resources.set(data.requestId, { url: data.request.url, bytes: 0 });
+    if (event.method === "Network.responseReceived" && resources.has(data.requestId)) resources.get(data.requestId).status = data.response.status;
+    if (event.method === "Network.loadingFinished" && resources.has(data.requestId)) resources.get(data.requestId).bytes = data.encodedDataLength;
+  });
+  const { send } = browser;
+  let frame;
+  const ev = async expression => {
+    const context = browser.contexts.get(frame);
+    if (!context) throw new Error("Game frame context is unavailable");
+    return browser.evaluate(expression, context);
+  };
+  const until = expression => waitFor(() => ev(expression).catch(error => {
+    if (/context|frame|destroyed/i.test(error.message)) return false;
+    throw error;
+  }), expression);
+  const graph = date => until(`document.querySelector('.levelHeader h2')?.textContent === ${JSON.stringify(getDailyPuzzleForDate(date).name)} && document.querySelectorAll('.vertex').length === ${getDailyPuzzleForDate(date).vertices.length}`);
+  const navigate = async path => { await ev(`location.hash = ${JSON.stringify(path)}`); await until(`location.hash === '#${path}' && !!document.querySelector('main')`); };
+  const resize = async (width, height, mobile = false) => {
+    await send("Emulation.setDeviceMetricsOverride", { width: Math.max(width, 1000), height: Math.max(height, 900), deviceScaleFactor: 1, mobile });
+    await browser.evaluate(`document.querySelector('iframe').style.width='${width}px';document.querySelector('iframe').style.height='${height}px'`);
+    await until(`innerWidth === ${width} && innerHeight === ${height}`);
+    await pause(80);
+  };
+  const click = async selector => {
+    await ev(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'center'})`);
+    const rect = await ev(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    const offset = await browser.evaluate("(()=>{const r=document.querySelector('iframe').getBoundingClientRect();return{x:r.x,y:r.y}})()");
+    const point = { x: rect.x + offset.x, y: rect.y + offset.y };
+    await send("Input.dispatchMouseEvent", { type: "mouseMoved", ...point });
+    await send("Input.dispatchMouseEvent", { type: "mousePressed", ...point, button: "left", clickCount: 1 });
+    await send("Input.dispatchMouseEvent", { type: "mouseReleased", ...point, button: "left", clickCount: 1 });
+  };
+  const button = text => ev(`Array.from(document.querySelectorAll('button')).find(button=>button.textContent.trim()===${JSON.stringify(text)}).click()`);
+  const solve = async date => {
+    const puzzle = getDailyPuzzleForDate(date), solution = solveThreeColoring(puzzle, { dynamic: true }).solution;
+    for (let i = 0; i < puzzle.vertices.length; i++) for (let color = 0; color <= solution[puzzle.vertices[i].id]; color++) await ev(`document.querySelectorAll('.vertexGroup')[${i}].dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+    await until("!!document.querySelector('.completionCard')");
+  };
+  await send("Page.enable"); await send("Runtime.enable"); await send("Network.enable");
+  await send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send("Page.addScriptToEvaluateOnNewDocument", { source: `
+    window.__documentId=crypto.randomUUID();
+    const NativeDate=Date;window.__now='2026-11-04T17:00:00Z';window.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[window.__now]))}static now(){return NativeDate.parse(window.__now)}};
+    window.__audio=[];const NativeAudio=window.AudioContext;window.AudioContext=class extends NativeAudio{constructor(...args){super(...args);window.__audio.push(this)}};
+  ` });
+  await send("Page.navigate", { url: `http://127.0.0.1:${parent.address().port}/` });
+  frame = await waitFor(async () => (await send("Page.getFrameTree")).frameTree.childFrames?.[0]?.frame.id, "game iframe");
+  await until("!!document.querySelector('.tutorialGuidance') && document.querySelectorAll('.vertex').length===3");
+  const metrics = {};
+
+  await t.test("907×510 starts in the existing tutorial without Daily downloads, PWA, fullscreen or external navigation", async () => {
+    assert.equal(await ev("location.hash"), "#/levels/1");
+    assert.equal(await ev("innerWidth"), 907);
+    assert.equal(await ev("innerHeight"), 510);
+    assert.equal(await ev("document.querySelector('[aria-label*=\"full screen\"]')"), null);
+    assert.equal(await ev("document.querySelector('.installPrompt,link[rel=manifest],link[rel=canonical]')"), null);
+    assert.equal(await ev("navigator.serviceWorker.getRegistrations().then(registrations=>registrations.length)"), 0);
+    assert.ok(await ev("Array.from(document.querySelectorAll('a')).every(a=>a.getAttribute('href').startsWith('#/'))"));
+    assert.ok(await ev("document.documentElement.scrollWidth<=innerWidth+1"));
+    assert.equal([...resources.values()].some(resource => resource.url.includes(`${prefix}daily/`)), false);
+    await pause(100);
+    metrics.initialBytes = [...resources.values()].filter(resource => resource.url.startsWith(gameOrigin + prefix)).reduce((sum, resource) => sum + resource.bytes, 0);
+    metrics.initialRequests = [...resources.values()].filter(resource => resource.url.startsWith(gameOrigin + prefix));
+    metrics.smallLayout = await ev("(()=>{const r=document.querySelector('.graphViewport').getBoundingClientRect();return{top:r.top,bottom:r.bottom,height:r.height,footerBottom:document.querySelector('.graphFooter').getBoundingClientRect().bottom,scrollHeight:document.documentElement.scrollHeight}})()");
+    assert.ok(metrics.smallLayout.top < 510, "Graph should be visible in the initial frame");
+    assert.ok(metrics.smallLayout.footerBottom <= 510, "Zoom controls should fit in the initial frame");
+    const screenshot = await send("Page.captureScreenshot", { format: "png", clip: { x: 0, y: 0, width: 907, height: 510, scale: 1 } });
+    await writeFile(join(tmpdir(), "3color-crazygames-907.png"), Buffer.from(screenshot.data, "base64"));
+    assert.equal((await fetch(`${gameOrigin}${prefix}daily`)).status, 404);
+    assert.equal((await fetch(`${gameOrigin}/api/page`)).status, 404);
+  });
+  await t.test("trusted keyboard/mouse inputs finish the real tutorial and activate Web Audio only after a gesture", async () => {
+    assert.equal(await ev("window.__audio.length"), 0);
+    await ev("document.querySelector('.vertexGroup').focus()");
+    await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+    await until("document.querySelector('.tutorialGuidance').textContent.includes('Step 2')");
+    assert.equal(await ev("window.__audio[0].state"), "running");
+    await click(".vertexGroup:nth-of-type(3)");
+    await until("document.querySelector('.tutorialGuidance').textContent.includes('Step 3')");
+    await click(".vertexGroup:nth-of-type(3)");
+    await until("document.querySelector('.tutorialGuidance').textContent.includes('Step 4')");
+    for (let i = 0; i < 3; i++) await click(".vertexGroup:nth-of-type(4)");
+    await until("!!document.querySelector('.completionCard')");
+    assert.equal(await ev("JSON.parse(localStorage.getItem('3color-campaign-tutorial')).completed"), true);
+    await until("localStorage.getItem('3color-highest-completed-level') === '0'");
+  });
+  await t.test("Daily stays lazy, uses Fox colors, records on-time streaks and shares text without an external URL", async () => {
+    await navigate("/daily"); await graph("2026-11-04");
+    assert.equal([...resources.values()].filter(resource => resource.url.includes(`${prefix}daily/`)).length, 1);
+    const fills = await ev("Array.from(document.querySelectorAll('.vertex')).map(vertex=>vertex.getAttribute('fill'))");
+    assert.ok(fills.every(fill => fill === "var(--uncolored-vertex)"));
+    await solve("2026-11-04");
+    await until("document.querySelector('.dailyStreakReinforcement')?.textContent.includes('Streak started')");
+    assert.deepEqual([...new Set(await ev("Array.from(document.querySelectorAll('.vertex')).map(vertex=>vertex.getAttribute('fill'))"))].sort(), ["#d96a2b", "#2b2118", "#f4d9a6"].sort());
+    await ev("window.__shares=[];window.__copies=[];Object.defineProperty(navigator,'share',{configurable:true,writable:true,value:async data=>window.__shares.push(data)});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>window.__copies.push(text)}})");
+    await button("Share Result"); await until("window.__shares.length===1");
+    const data = await ev("window.__shares[0]");
+    assert.equal(data.url, undefined); assert.match(data.text, /3Color Daily · Nov 4\nFox Face · Expert/); assert.match(data.text, /🔥 1-day streak/); assert.doesNotMatch(JSON.stringify(data), /https?:|3color\.app/);
+    await ev("navigator.share=async()=>{throw new Error('unavailable')}");
+    await button("Share Result"); await until("window.__copies.length===1");
+    assert.equal(await ev("window.__copies[0]"), data.text);
+    await ev("window.__now='2026-11-05T17:00:00Z';window.dispatchEvent(new Event('focus'))"); await graph("2026-11-05");
+    assert.match(await ev("document.querySelector('.dailyStreakCurrent').textContent"), /1 day/);
+    await navigate("/daily/2026-11-06");
+    await until("document.querySelector('main').textContent.includes('This Daily puzzle is unavailable')");
+    assert.equal(await ev("document.querySelectorAll('.vertex').length"), 0);
+    await navigate("/daily"); await graph("2026-11-05");
+    await click(".dailyDateButton"); await until("!!document.querySelector('.dailyCalendar')");
+    const rect = await ev("(()=>{const r=document.querySelector('.dailyCalendar').getBoundingClientRect();return{top:r.top,bottom:r.bottom}})()");
+    metrics.calendar = rect;
+    assert.ok(rect.top >= 0 && rect.bottom <= 510);
+    await ev("document.querySelector('[data-date=\"2026-11-04\"]').click()"); await graph("2026-11-04");
+    assert.equal(await ev("location.hash"), "#/daily/2026-11-04");
+    assert.equal([...resources.values()].filter(resource => resource.url.includes(`${prefix}daily/`)).length, 1);
+    const previous = await ev("window.__documentId");
+    await browser.evaluate(`document.querySelector('iframe').src=${JSON.stringify(gameUrl + "?reload=1#/daily/2026-11-04")}`);
+    await until(`window.__documentId && window.__documentId !== ${JSON.stringify(previous)}`); await graph("2026-11-04");
+    assert.equal([...resources.values()].filter(resource => resource.url.includes(`${prefix}daily/`)).length, 1);
+  });
+  await t.test("zoom, tracing, palettes, appearance and generators work at larger desktop and mobile sizes", async () => {
+    await resize(1216, 684);
+    await click('[aria-label="Zoom in"]');
+    assert.equal(await ev("document.querySelector('[aria-label=\"Fit graph to screen\"]').textContent"), "110%");
+    await click('[aria-label="Fit graph to screen"]');
+    await navigate("/custom"); await until("document.querySelectorAll('.vertex').length===8");
+    assert.equal(await ev("Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Share Puzzle')"), false);
+    const seed = serializeGraph({ width: 600, height: 480, vertices: [{ id: 0, x: 300, y: 90 }, { id: 1, x: 150, y: 350 }, { id: 2, x: 450, y: 350 }], edges: [[0, 1], [1, 2], [0, 2]] });
+    const seedAudioCount = await ev("window.__audio.length");
+    await navigate(`/custom?seed=${seed}`);
+    await until("document.querySelectorAll('.vertex').length===3");
+    assert.equal(await ev("window.__audio.length"), seedAudioCount);
+    await ev("(()=>{document.querySelector('.generatorSettings').open=true;const input=document.querySelector('#vertexCount');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'12');input.dispatchEvent(new Event('input',{bubbles:true}))})()");
+    await button("Generate Graph");
+    await until("document.querySelectorAll('.vertex').length===12");
+    assert.equal(await ev("location.hash.includes('seed=')"), false);
+    await ev("document.querySelector('.gameSettings').open=true");
+    await until("!!document.querySelector('.themePresetButton')");
+    await click(".themePresetButton:nth-child(2)");
+    await until("localStorage.getItem('3color-theme-id')==='neon'");
+    await click(".vertexGroup:nth-of-type(2)");
+    assert.equal(await ev("document.querySelector('.vertex').getAttribute('fill')"), "#ff2d95");
+    await ev("(()=>{const input=document.querySelector('input[type=color]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'#123456');input.dispatchEvent(new Event('input',{bubbles:true}))})()");
+    await until("document.querySelector('.vertex').getAttribute('fill')==='#123456'");
+    await ev("document.querySelector('.gameSettings').open=false");
+    for (const appearance of ["light", "dark"]) {
+      await ev(`(()=>{const select=document.querySelector('.appearanceControl select');select.value='${appearance}';select.dispatchEvent(new Event('change',{bubbles:true}))})()`);
+      await until(`document.documentElement.dataset.appearance==='${appearance}'`);
+    }
+    await click(".soundToggle");
+    await until("localStorage.getItem('3color-sound-enabled')==='false'");
+    await navigate("/daily/2026-11-04"); await graph("2026-11-04");
+    assert.equal(await ev("document.querySelector('.soundToggle').getAttribute('aria-pressed')"), "false");
+    const audioCount = await ev("window.__audio.length");
+    await resize(390, 844, true); await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
+    await ev("document.querySelector('.vertexGroup').scrollIntoView({block:'center'})");
+    const before = await ev("document.querySelector('.vertex').getAttribute('fill')");
+    const point = await ev("(()=>{const r=document.querySelector('.vertex').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()");
+    await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ ...point, radiusX: 2, radiusY: 2, force: 1, id: 1 }] });
+    await until("!!document.querySelector('.activeEdge')");
+    await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    assert.equal(await ev("document.querySelector('.vertex').getAttribute('fill')"), before);
+    await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ ...point, radiusX: 2, radiusY: 2, force: 1, id: 2 }] });
+    await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await until("document.querySelector('.vertex').getAttribute('fill') !== 'var(--uncolored-vertex)'");
+    assert.equal(await ev("document.querySelector('.vertex').getAttribute('fill')"), "#d96a2b");
+    assert.equal(await ev("window.__audio.length"), audioCount);
+    assert.ok(await ev("document.documentElement.scrollWidth<=innerWidth+1"));
+    const screenshot = await send("Page.captureScreenshot", { format: "png", clip: { x: 0, y: 0, width: 390, height: 844, scale: 1 } });
+    await writeFile(join(tmpdir(), "3color-crazygames-mobile.png"), Buffer.from(screenshot.data, "base64"));
+    await click(".soundToggle");
+    await until("localStorage.getItem('3color-sound-enabled')==='true'");
+    await ev("window.__resumeCalls=0;const context=window.__audio.at(-1);const resume=context.resume.bind(context);Object.defineProperty(context,'state',{configurable:true,value:'interrupted'});context.resume=()=>{window.__resumeCalls++;Object.defineProperty(context,'state',{configurable:true,value:'running'});return resume()}");
+    await click(".vertexGroup:nth-of-type(2)");
+    assert.equal(await ev("window.__resumeCalls"), 1);
+  });
+  await t.test("the upload has no external network dependency and tolerates blocked embedded storage", async () => {
+    assert.ok([...resources.values()].every(resource => resource.url.startsWith(gameOrigin) || resource.url.startsWith(`http://127.0.0.1:${parent.address().port}`)));
+    assert.ok([...resources.values()].filter(resource => resource.url.startsWith(gameOrigin + prefix)).every(resource => resource.status === 200));
+    assert.deepEqual(browser.errors, []);
+    await send("Page.addScriptToEvaluateOnNewDocument", { source: `if(location.origin===${JSON.stringify(gameOrigin)})Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Blocked storage','SecurityError')}});` });
+    const previous = await ev("window.__documentId");
+    await browser.evaluate(`document.querySelector('iframe').src=${JSON.stringify(gameUrl + "?reload=blocked#/levels/1")}`);
+    await until(`window.__documentId && window.__documentId !== ${JSON.stringify(previous)}`);
+    await until("!!document.querySelector('.tutorialGuidance')");
+    assert.equal(await ev("innerWidth"), 390);
+    assert.ok(await ev("document.querySelector('.graphViewport').getBoundingClientRect().top < innerHeight"));
+    const screenshot = await send("Page.captureScreenshot", { format: "png", clip: { x: 0, y: 0, width: 390, height: 844, scale: 1 } });
+    await writeFile(join(tmpdir(), "3color-crazygames-mobile-onboarding.png"), Buffer.from(screenshot.data, "base64"));
+    await ev("document.querySelector('.vertexGroup').dispatchEvent(new MouseEvent('click',{bubbles:true}))");
+    await until("document.querySelector('.tutorialGuidance').textContent.includes('Step 2')");
+    await ev("document.querySelector('.soundToggle').click()");
+    await until("document.querySelector('.soundToggle').getAttribute('aria-pressed')==='false'");
+    await navigate("/daily"); await graph("2026-11-04");
+    assert.equal(await ev("document.querySelector('.soundToggle').getAttribute('aria-pressed')"), "false");
+    await solve("2026-11-04"); await until("!!document.querySelector('.dailyStreakReinforcement')");
+    assert.deepEqual(browser.errors, []);
+    await writeFile(join(tmpdir(), "3color-crazygames-browser-metrics.json"), JSON.stringify(metrics, null, 2));
+    console.log("Initial static iframe transfer:", metrics.initialBytes, "bytes; 907×510 graph:", metrics.smallLayout, "calendar:", metrics.calendar);
+  });
+});

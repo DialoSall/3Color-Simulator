@@ -13,46 +13,7 @@ import { buildDailyResultShare } from "../src/utils/dailyResultSharing.js";
 import { getRouteMetadata } from "../src/seo/metadata.js";
 import { getDailyDateKey, addDailyDays } from "../src/utils/dailyDate.js";
 
-const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-async function waitFor(read, description) {
-  for (let i = 0; i < 300; i++) {
-    const value = await read();
-    if (value) return value;
-    await pause(50);
-  }
-  throw new Error(`Timed out: ${description}`);
-}
-
-async function connect(url) {
-  const socket = new WebSocket(url);
-  await new Promise((resolve, reject) => {
-    socket.addEventListener("open", resolve, { once: true });
-    socket.addEventListener("error", reject, { once: true });
-  });
-  let id = 0;
-  const pending = new Map();
-  const errors = [];
-  socket.addEventListener("message", event => {
-    const message = JSON.parse(event.data);
-    if (message.method === "Runtime.exceptionThrown") errors.push(message.params.exceptionDetails.text);
-    if (!message.id) return;
-    const callback = pending.get(message.id);
-    pending.delete(message.id);
-    if (message.error) callback.reject(new Error(JSON.stringify(message.error)));
-    else callback.resolve(message.result);
-  });
-  const send = (method, params = {}) => new Promise((resolve, reject) => {
-    const next = ++id;
-    pending.set(next, { resolve, reject });
-    socket.send(JSON.stringify({ id: next, method, params }));
-  });
-  const evaluate = async expression => {
-    const result = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
-    return result.result.value;
-  };
-  return { send, evaluate, errors, close: () => socket.close() };
-}
+import { waitFor, connect } from "./lib/browserHarness.js";
 
 test("production Daily date routes, navigation, retention, analytics and offline reload", { timeout: 120000 }, async t => {
   const candidates = [process.env.CHROME_PATH, "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome", "/usr/bin/chromium"].filter(Boolean);
@@ -169,6 +130,7 @@ test("production Daily date routes, navigation, retention, analytics and offline
     assert.deepEqual(await progress(), original);
     await ev("sessionStorage.removeItem('hold-daily'); window.__releaseDaily.splice(0).forEach(resolve => resolve())");
     await graph("2026-11-04");
+    assert.equal(await ev("!!document.querySelector('[aria-label=\"Expand puzzle to full screen\"]')"), await ev("document.fullscreenEnabled"));
     assert.equal(await ev("document.title"), getRouteMetadata("/daily/2026-11-04", "2026-11-07").title);
     assert.equal(await ev("document.querySelector('meta[property=\"og:url\"]').content"), "https://3color.app/daily/2026-11-04");
     assert.equal(await ev("window.__dailyRequests.length"), 1);

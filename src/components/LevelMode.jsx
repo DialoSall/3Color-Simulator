@@ -17,7 +17,8 @@ function getSavedHighestCompleted() {
     return -1;
   }
 
-  const savedValue = window.localStorage.getItem(PROGRESS_KEY);
+  let savedValue;
+  try { savedValue = window.localStorage.getItem(PROGRESS_KEY); } catch { return -1; }
 
   if (savedValue === null) {
     return -1;
@@ -172,10 +173,9 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
       const nextHighest = Math.max(previousHighest, levelIndex);
 
       if (nextHighest !== previousHighest) {
-        window.localStorage.setItem(
-          PROGRESS_KEY,
-          String(nextHighest)
-        );
+        try {
+          window.localStorage.setItem(PROGRESS_KEY, String(nextHighest));
+        } catch { /* Unlocks remain usable during this session if embedded storage is blocked. */ }
       }
 
       return nextHighest;

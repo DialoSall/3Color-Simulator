@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "prebuild:crazygames": "npm run validate:daily && npm run check:daily-runtime",
+    "build:crazygames": "vite build --mode crazygames",
+    "postbuild:crazygames": "node scripts/checkCrazyGamesBuild.js",
+    "test:crazygames:browser": "node --test scripts/crazygames.browser.test.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:sharing": "node --test scripts/puzzleSharing.test.js",

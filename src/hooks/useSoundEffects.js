@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IS_CRAZYGAMES } from "../platform";
 
 const SOUND_ENABLED_KEY = "3color-sound-enabled";
 const MASTER_VOLUME = 3;
 const MAX_VOLUME = 0.18;
+let sessionSoundEnabled = true;
 
 function getSavedSoundEnabled() {
   if (typeof window === "undefined") {
     return true;
   }
 
-  const savedValue = window.localStorage.getItem(SOUND_ENABLED_KEY);
+  let savedValue;
+  try { savedValue = window.localStorage.getItem(SOUND_ENABLED_KEY); } catch { return sessionSoundEnabled; }
 
   if (savedValue === null) {
     return true;
@@ -27,7 +30,8 @@ export function useSoundEffects() {
       return;
     }
 
-    window.localStorage.setItem(SOUND_ENABLED_KEY, String(soundEnabled));
+    sessionSoundEnabled = soundEnabled;
+    try { window.localStorage.setItem(SOUND_ENABLED_KEY, String(soundEnabled)); } catch { /* Keep mute shared between modes even when embedded storage is blocked. */ }
   }, [soundEnabled]);
 
   const getAudioContext = useCallback(() => {
@@ -62,7 +66,7 @@ export function useSoundEffects() {
         return;
       }
 
-      if (audioContext.state === "suspended") {
+      if (audioContext.state === "suspended" || (IS_CRAZYGAMES && audioContext.state === "interrupted")) {
         audioContext.resume();
       }
 

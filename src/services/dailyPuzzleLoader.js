@@ -41,9 +41,11 @@ export async function readDailyPayload(url, validate, { fetcher = globalThis.fet
     // Retain offline access to unchanged identities in an older cached month.
     // Never store those older bytes under the new immutable URL.
     try {
-      const month = url.match(/^\/daily\/(\d{4}-\d{2})\./)?.[1];
+      const pathname = new URL(url, globalThis.location?.href ?? "https://cache.invalid/").pathname;
+      const folder = pathname.slice(0, pathname.lastIndexOf("/") + 1);
+      const month = pathname.match(/\/daily\/(\d{4}-\d{2})\./)?.[1];
       for (const request of month && cache ? await cache.keys() : []) {
-        if (!new URL(request.url).pathname.startsWith(`/daily/${month}.`)) continue;
+        if (!new URL(request.url).pathname.startsWith(`${folder}${month}.`)) continue;
         try { return validate(await (await cache.match(request)).json()); } catch { /* Try another cached revision. */ }
       }
     } catch { /* CacheStorage may be unavailable. */ }
