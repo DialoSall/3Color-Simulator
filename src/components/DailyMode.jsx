@@ -18,8 +18,7 @@ import { DAILY_LAUNCH_DATE } from "../utils/dailyDate";
 import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getDailyStreaks } from "../utils/dailyRetention";
 import { trackEvent } from "../utils/analytics";
 import { getDailyPath } from "../utils/dailyUrl";
-
-const DAILY_URL = "https://3color.app/daily";
+import { shareDailyResult } from "../utils/dailyResultSharing";
 
 function DailyMode({ progressService = dailyProgressService, previewDateKey } = {}) {
   const today = useDailyDate();
@@ -263,36 +262,8 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
       resets,
     };
 
-    const text = `I completed ${isToday ? "today's 3Color puzzle" : `the 3Color puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}`} in ${formatGameTime(
-      resultToShare.timeMilliseconds
-    )} with ${resultToShare.recolors} recolors and ${
-      resultToShare.resets
-    } resets.`;
-
-    const shareData = {
-      title: "3Color Daily Puzzle",
-      text,
-      url: DAILY_URL,
-    };
-
-    try {
-      if (navigator.share && window.isSecureContext) {
-        await navigator.share(shareData);
-        setShareMessage("Thanks for sharing!");
-        return;
-      }
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        return;
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(`${text}\n${DAILY_URL}`);
-      setShareMessage("Result copied!");
-    } catch {
-      setShareMessage(`${text} ${DAILY_URL}`);
-    }
+    const feedback = await shareDailyResult({ puzzle: dailyPuzzle, result: resultToShare, isToday, currentStreak });
+    if (feedback !== null) setShareMessage(feedback);
   }
 
   return (

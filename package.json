@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:sharing": "node --test scripts/puzzleSharing.test.js",
+    "test:daily-sharing": "node --test scripts/dailyResultSharing.test.js",
     "validate:levels": "node scripts/validateLevels.js",
     "prebuild": "npm run validate:daily && npm run check:daily-runtime",
     "generate:daily-runtime": "node scripts/generateDailyRuntime.js",
