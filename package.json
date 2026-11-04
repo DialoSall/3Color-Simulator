@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "test:sharing": "node --test scripts/puzzleSharing.test.js",
     "test:daily-sharing": "node --test scripts/dailyResultSharing.test.js",
+    "test:seo": "node --test scripts/seo.test.js",
+    "check:seo-production": "node scripts/checkSeoProduction.js",
     "validate:levels": "node scripts/validateLevels.js",
     "prebuild": "npm run validate:daily && npm run check:daily-runtime",
     "generate:daily-runtime": "node scripts/generateDailyRuntime.js",
@@ -32,7 +34,7 @@
     "test:preview": "node --test scripts/devPreview.test.js",
     "test:tutorial": "node --test scripts/campaignTutorial.test.js",
     "check:preview-production": "node scripts/checkPreviewProduction.js",
-    "postbuild": "npm run check:preview-production && npm run check:daily-production"
+    "postbuild": "npm run check:preview-production && npm run check:daily-production && npm run check:seo-production"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

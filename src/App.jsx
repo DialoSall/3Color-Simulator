@@ -6,6 +6,7 @@ import CustomMode from "./components/CustomMode";
 import DailyMode from "./components/DailyMode";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import AppHeader from "./components/AppHeader";
+import RouteMetadata from "./components/RouteMetadata";
 
 const DevPreview = import.meta.env.DEV ? lazy(() => import("./dev/DevPreview.jsx")) : null;
 
@@ -15,6 +16,7 @@ function App() {
 
   return (
     <>
+      <RouteMetadata />
       <AnalyticsTracker />
       <AppHeader />
 

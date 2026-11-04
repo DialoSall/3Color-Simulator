@@ -1,10 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import seoPlugin from "./server/seoPlugin.js";
 
 export default defineConfig({
   plugins: [
     react(),
+    seoPlugin(),
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
@@ -41,7 +43,7 @@ export default defineConfig({
         navigateFallback: "/index.html",
         globPatterns: ["**/*.{js,css,html,png,svg,ico,webp}"],
         globIgnores: ["daily/**"],
-        navigateFallbackDenylist: [/^\/daily\/.+\.json$/],
+        navigateFallbackDenylist: [/^\/daily\/.+\.json$/, /^\/sitemap\.xml$/, /^\/api(?:\/|$)/],
       },
     }),
   ],

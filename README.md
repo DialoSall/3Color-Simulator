@@ -69,6 +69,7 @@ npm run build
 npm run validate:levels
 npm run test:sharing
 npm run test:daily-sharing
+npm run test:seo
 npm run validate:daily
 npm run test:daily
 npm run test:retention
@@ -83,6 +84,11 @@ npm run test:preview
 After building, `npm run test:daily-routes:browser` checks navigation, result sharing,
 and offline reloads using an isolated Chrome profile. Requires Node 22+ and Chrome;
 set `CHROME_PATH` if Chrome is installed elsewhere.
+
+Daily URLs have route-aware search/social metadata and a dynamic `/sitemap.xml`
+on Vercel. New public dates appear without a daily redeploy. See
+[Daily SEO and discovery](docs/daily-seo.md) for canonical rules, server functions,
+offline behavior, and validation.
 
 ## Development Preview
 
