@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/page.js": { "includeFiles": "dist/index.html" }
+  },
   "headers": [
     {
       "source": "/daily/:file(\\d{4}-\\d{2}\\.[a-f0-9]{16}\\.json)",
@@ -7,8 +10,12 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/api/page?routePath=/:path*"
     }
   ]
 }

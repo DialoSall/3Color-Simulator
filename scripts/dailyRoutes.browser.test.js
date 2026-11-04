@@ -10,6 +10,8 @@ import { DAILY_PROGRESS_KEY, createDailyProgressService } from "../src/services/
 import { getDailyPuzzleForDate } from "./lib/dailyCatalog.js";
 import { solveThreeColoring } from "./lib/dailyGraph.js";
 import { buildDailyResultShare } from "../src/utils/dailyResultSharing.js";
+import { getRouteMetadata } from "../src/seo/metadata.js";
+import { getDailyDateKey, addDailyDays } from "../src/utils/dailyDate.js";
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function waitFor(read, description) {
@@ -102,6 +104,8 @@ test("production Daily date routes, navigation, retention, analytics and offline
     await ev(`document.querySelector('[data-date="${date}"]').click()`);
     await until(`location.pathname === '/daily/${date}' && !document.querySelector('.dailyCalendar')`);
     await graph(date);
+    await until(`document.querySelector('link[rel="canonical"]')?.href === 'https://3color.app/daily/${date}'`);
+    assert.equal(await ev("document.querySelectorAll('link[rel=canonical]').length"), 1);
   };
   const events = name => ev(`window.dataLayer.filter(event => event[0] === 'event' && event[1] === ${JSON.stringify(name)}).map(event => event[2])`);
   const progress = () => ev(`JSON.parse(localStorage.getItem('${DAILY_PROGRESS_KEY}'))`);
@@ -144,6 +148,9 @@ test("production Daily date routes, navigation, retention, analytics and offline
       await until("document.querySelector('main')?.textContent.includes('This Daily puzzle is unavailable')");
       assert.equal(await ev("document.querySelectorAll('.vertex, .dailyDateButton, .levelHeader, .dailyLoading').length"), 0);
       assert.equal(await ev("window.__dailyRequests.length"), 0);
+      await until("document.querySelector('meta[name=robots]')?.content === 'noindex, follow'");
+      assert.equal(await ev("document.querySelector('link[rel=canonical]')"), null);
+      assert.equal(await ev("document.title"), "Daily Puzzle Unavailable | 3Color");
       assert.deepEqual(await progress(), original);
       assert.equal(await ev("document.querySelector('main a').getAttribute('href')"), "/daily");
     }
@@ -152,6 +159,9 @@ test("production Daily date routes, navigation, retention, analytics and offline
     const response = await fetch(`${base}/daily/2026-11-04`);
     assert.equal(response.status, 200);
     assert.match(await response.text(), /id="root"/);
+    const serverHtml = await (await fetch(`${base}/daily/2026-11-04`)).text();
+    assert.match(serverHtml, /Fox Face \| 3Color Daily Puzzle – November 4, 2026/);
+    assert.match(serverHtml, /rel="canonical" href="https:\/\/3color.app\/daily\/2026-11-04"/);
     await ev("sessionStorage.setItem('hold-daily', '1')");
     await go("/daily/2026-11-04");
     await until("window.__releaseDaily.length === 1 && !!document.querySelector('.dailyLoading')");
@@ -159,6 +169,8 @@ test("production Daily date routes, navigation, retention, analytics and offline
     assert.deepEqual(await progress(), original);
     await ev("sessionStorage.removeItem('hold-daily'); window.__releaseDaily.splice(0).forEach(resolve => resolve())");
     await graph("2026-11-04");
+    assert.equal(await ev("document.title"), getRouteMetadata("/daily/2026-11-04", "2026-11-07").title);
+    assert.equal(await ev("document.querySelector('meta[property=\"og:url\"]').content"), "https://3color.app/daily/2026-11-04");
     assert.equal(await ev("window.__dailyRequests.length"), 1);
     await reload();
     await graph("2026-11-04");
@@ -181,6 +193,7 @@ test("production Daily date routes, navigation, retention, analytics and offline
     await select("2026-11-06");
     await button("Back to Today");
     await until("location.pathname === '/daily'"); await graph("2026-11-07");
+    assert.equal(await ev("document.querySelector('link[rel=canonical]').href"), "https://3color.app/daily/2026-11-07");
     assert.deepEqual(await events("daily_return_today"), [
       { date_key: "2026-11-07", from_date: "2026-11-05", source: "calendar" },
       { date_key: "2026-11-07", from_date: "2026-11-06", source: "button" },
@@ -190,6 +203,8 @@ test("production Daily date routes, navigation, retention, analytics and offline
     assert.deepEqual(await progress(), original);
     await ev("document.querySelector('.brand').click()");
     await until("!!document.querySelector('.primaryHomeButton')");
+    await until("document.querySelector('link[rel=canonical]')?.href === 'https://3color.app/'");
+    assert.equal(await ev("document.querySelectorAll('link[rel=canonical]').length"), 1);
     await ev("document.querySelector('.primaryHomeButton').click()");
     await until("location.pathname === '/daily'"); await graph("2026-11-07");
   });
@@ -269,6 +284,12 @@ test("production Daily date routes, navigation, retention, analytics and offline
     await select("2026-11-05");
   });
   await t.test("PWA serves direct dated URLs offline; cached months work and uncached history can return to Today", async () => {
+    const sitemapResponse = await fetch(`${base}/sitemap.xml`);
+    assert.match(sitemapResponse.headers.get("content-type"), /application\/xml/);
+    assert.equal(sitemapResponse.headers.get("cache-control"), "no-store");
+    const sitemap = await sitemapResponse.text();
+    assert.ok(sitemap.includes("https://3color.app/daily/2026-11-04"));
+    assert.equal(sitemap.includes(`https://3color.app/daily/${addDailyDays(getDailyDateKey(), 1)}`), false);
     await until("!!navigator.serviceWorker.controller");
     const precache = await ev("(async () => { const names = (await caches.keys()).filter(name => name.includes('precache')); return (await Promise.all(names.map(async name => (await (await caches.open(name)).keys()).map(request => new URL(request.url).pathname)))).flat(); })()");
     assert.ok(precache.includes("/index.html"));
@@ -286,6 +307,23 @@ test("production Daily date routes, navigation, retention, analytics and offline
     await until("document.querySelector('.dailyLoading')?.textContent.includes('Reconnect')");
     await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     assert.ok(await ev("document.documentElement.scrollWidth <= innerWidth + 1"));
+    assert.deepEqual(browser.errors, []);
+  });
+  await t.test("offline shell updates Daily metadata at New York midnight and keeps dated canonicals fixed", async () => {
+    const saved = await progress();
+    const setClock = async instant => {
+      await ev(`window.__dailyNow = ${JSON.stringify(instant)}; sessionStorage.setItem('route-clock', window.__dailyNow); window.dispatchEvent(new Event('focus'))`);
+    };
+    await setClock("2026-12-06T04:59:59Z");
+    await until("document.querySelector('link[rel=canonical]')?.href === 'https://3color.app/daily/2026-12-05'");
+    await setClock("2026-12-06T05:00:00Z");
+    await until("document.querySelector('link[rel=canonical]')?.href === 'https://3color.app/daily/2026-12-06'");
+    await go("/daily/2026-11-04"); await graph("2026-11-04");
+    await setClock("2026-12-07T05:00:00Z");
+    assert.equal(await ev("document.querySelector('link[rel=canonical]').href"), "https://3color.app/daily/2026-11-04");
+    assert.equal(await ev("document.querySelectorAll('link[rel=canonical]').length"), 1);
+    assert.equal(await ev("document.querySelector('meta[name=robots]').content"), "index, follow");
+    assert.deepEqual(await progress(), saved);
     assert.deepEqual(browser.errors, []);
   });
 });

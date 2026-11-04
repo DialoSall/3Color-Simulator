@@ -90,7 +90,9 @@ navigation with the local server stopped. Run `npm run test:daily-routes` and,
 after building, `npm run test:daily-routes:browser`. The latter requires Node 22+
 and installed Chrome (or `CHROME_PATH`), uses a temporary profile/ephemeral port,
 and leaves the normal development server and browser profile untouched. Live
-Vercel deployment behavior still requires checking after publication.
+Route-aware search/social metadata and the dynamic sitemap are described in
+[Daily SEO and discovery](daily-seo.md). Deployed packaging/routing still requires
+checking after publication.
 
 ## Daily result sharing
 
