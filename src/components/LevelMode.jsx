@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { levels } from "../data/levels";
 import GraphCanvas from "./GraphCanvas";
+import { cloneGraph, cycleVertexColor, formatGameTime } from "../utils/gameplay";
 import { getConflicts, isSolved } from "../utils/graphValidation";
 import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
@@ -9,31 +10,7 @@ import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 import { useCampaignTutorial } from "../hooks/useCampaignTutorial";
 
-const colorCycle = [null, "red", "blue", "yellow"];
 const PROGRESS_KEY = "3color-highest-completed-level";
-
-function cloneLevel(level) {
-  return {
-    ...level,
-    vertices: level.vertices.map((vertex) => ({ ...vertex })),
-    edges: level.edges.map((edge) => [...edge]),
-  };
-}
-
-function formatTime(totalMilliseconds) {
-  const totalSeconds = Math.floor(totalMilliseconds / 1000);
-
-  if (totalSeconds < 60) {
-    const milliseconds = totalMilliseconds % 1000;
-
-    return `${totalSeconds}.${String(milliseconds).padStart(3, "0")}`;
-  }
-
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
 
 function getSavedHighestCompleted() {
   if (typeof window === "undefined") {
@@ -79,7 +56,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
   const [levelIndex, setLevelIndex] = useState(safeStartingIndex);
   const [currentLevel, setCurrentLevel] = useState(() =>
-    cloneLevel(levels[safeStartingIndex])
+    cloneGraph(levels[safeStartingIndex])
   );
   const [recolors, setRecolors] = useState(0);
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
@@ -174,7 +151,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
     }
 
     setLevelIndex(requestedIndex);
-    setCurrentLevel(cloneLevel(levels[requestedIndex]));
+    setCurrentLevel(cloneGraph(levels[requestedIndex]));
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
@@ -264,7 +241,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
     else navigate(`/levels/${levels[nextIndex].id}`);
 
     setLevelIndex(nextIndex);
-    setCurrentLevel(cloneLevel(levels[nextIndex]));
+    setCurrentLevel(cloneGraph(levels[nextIndex]));
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
@@ -307,21 +284,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
     const previousConflictCount = conflicts.length;
 
-    const updatedVertices = currentLevel.vertices.map((vertex) => {
-      if (vertex.id !== vertexId) {
-        return vertex;
-      }
-
-      const currentColorIndex = colorCycle.indexOf(vertex.color);
-
-      const nextColor =
-        colorCycle[(currentColorIndex + 1) % colorCycle.length];
-
-      return {
-        ...vertex,
-        color: nextColor,
-      };
-    });
+    const updatedVertices = currentLevel.vertices.map(vertex => cycleVertexColor(vertex, vertexId));
 
     const nextConflictCount = getConflicts(
       updatedVertices,
@@ -344,7 +307,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
     playSound("reset");
     tutorial.reset();
 
-    setCurrentLevel(cloneLevel(levels[levelIndex]));
+    setCurrentLevel(cloneGraph(levels[levelIndex]));
 
     setRecolors(0);
     setVisitedVertices(new Set());
@@ -357,7 +320,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
     playSound("reset");
     tutorial.reset();
     
-    setCurrentLevel(cloneLevel(levels[levelIndex]));
+    setCurrentLevel(cloneGraph(levels[levelIndex]));
     setRecolors(0);
     setVisitedVertices(new Set());
     setLastVertexId(null);
@@ -467,7 +430,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
                 <div>
                   <span>Time</span>
-                  <strong>{formatTime(elapsedMilliseconds)}</strong>
+                  <strong>{formatGameTime(elapsedMilliseconds)}</strong>
                 </div>
 
                 <div>
@@ -503,7 +466,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
                   <div className="completionStats">
                     <div>
                       <span>Time</span>
-                      <strong>{formatTime(elapsedMilliseconds)}</strong>
+                      <strong>{formatGameTime(elapsedMilliseconds)}</strong>
                     </div>
 
                     <div>
