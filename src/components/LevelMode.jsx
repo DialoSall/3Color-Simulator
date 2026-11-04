@@ -7,6 +7,7 @@ import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
+import { useCampaignTutorial } from "../hooks/useCampaignTutorial";
 
 const colorCycle = [null, "red", "blue", "yellow"];
 const PROGRESS_KEY = "3color-highest-completed-level";
@@ -101,6 +102,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
   } = useColorTheme();
 
   const { soundEnabled, setSoundEnabled, playSound } = useSoundEffects();
+  const tutorial = useCampaignTutorial(currentLevel.id === 1 && !isPreview);
   
 
   const conflicts = useMemo(() => {
@@ -277,6 +279,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
   }
 
   function handleVertexClick(vertexId) {
+    if (!tutorial.canColor(vertexId)) return;
     playSound("vertex");
 
     if (!timerRunning && !solved) {
@@ -325,6 +328,8 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
       currentLevel.edges
     ).length;
 
+    tutorial.onMove(vertexId, updatedVertices, currentLevel.edges);
+
     setCurrentLevel({
       ...currentLevel,
       vertices: updatedVertices,
@@ -337,6 +342,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
   function handleReset() {
     playSound("reset");
+    tutorial.reset();
 
     setCurrentLevel(cloneLevel(levels[levelIndex]));
 
@@ -349,6 +355,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
   function handleReplayLevel() {
     playSound("reset");
+    tutorial.reset();
     
     setCurrentLevel(cloneLevel(levels[levelIndex]));
     setRecolors(0);
@@ -485,6 +492,8 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
                   <p className="completionEyebrow">Level {currentLevel.id} Complete</p>
 
+                  {tutorial.reinforcement && <p className="tutorialReinforcement">That's it. Color every circle, and never let connected circles match.</p>}
+
                   <h3>
                     {levelIndex === levels.length - 1
                       ? (isPreview ? "Preview complete." : "You finished every level.")
@@ -509,6 +518,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
                   </div>
 
                   <div className="completionActions">
+                    {tutorial.canReplay && <button className="completionSecondaryButton" onClick={() => { handleReplayLevel(); tutorial.replay(); }}>Replay tutorial</button>}
                     <button
                       className="completionSecondaryButton"
                       onClick={handleReplayLevel}
@@ -537,6 +547,22 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
                 width={currentLevel.width}
                 height={currentLevel.height}
                 colorTheme={activeTheme}
+                highlightedVertexIds={tutorial.guidance?.vertexIds}
+                highlightedEdges={tutorial.guidance?.edges}
+                interactiveVertexIds={tutorial.guidance?.allowedIds}
+                guidance={tutorial.step > 0 && (
+                  <section className="tutorialGuidance" aria-label="Level 1 tutorial">
+                    <div role="status" aria-live="polite" aria-atomic="true">
+                      <span className="eyebrow">Quick start · Step {tutorial.step} of 4</span>
+                      <p>{tutorial.guidance.message}</p>
+                      {tutorial.step < 4 && <small>{tutorial.step === 3 ? "Change either highlighted circle." : "Follow the highlighted circle."} Tap, click, or use Enter / Space.</small>}
+                    </div>
+                    <button type="button" onClick={() => {
+                      tutorial.skip();
+                      graphSectionRef.current?.querySelector('.graphViewport')?.focus({ preventScroll: true });
+                    }}>Skip tutorial</button>
+                  </section>
+                )}
               />
 
 
@@ -574,6 +600,8 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
                       ? "Some connected circles share the same color. Change one of them to fix the graph."
                       : "Click or tap a circle to change its color."}
                   </p>
+
+                  {tutorial.canReplay && <button type="button" className="tutorialReplay" onClick={() => { handleReplayLevel(); tutorial.replay(); scrollToGraph(); }}>Replay tutorial</button>}
                 </div>
 
                 <button onClick={handleReset}>Reset Puzzle</button>
@@ -596,6 +624,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
               </aside>
             )}
             </section>
+            {tutorial.storageError && <p role="status">{tutorial.storageError}</p>}
         </main>
     );
 }
