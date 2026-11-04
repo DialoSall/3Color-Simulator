@@ -3,7 +3,7 @@ import { dailyDesignBankConfig } from "../src/data/daily/designConfig.js";
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { addDailyDays, getDailyDateKey, getDailyNumber, millisecondsUntilNextDaily, parseDateKey } from '../src/utils/dailyDate.js';
+import { addDailyDays, getDailyDateKey, millisecondsUntilNextDaily, parseDateKey } from '../src/utils/dailyDate.js';
 import { dailyPuzzles, dailySchedule, getDailyPuzzle, getDailyPuzzleForDate, MissingDailyPuzzleError } from '../src/data/dailyPuzzles.js';
 import { generatedDailyPuzzles } from '../src/data/daily/generated/index.js';
 import { handcraftedPuzzles } from '../src/data/daily/handcrafted.js';
@@ -41,7 +41,6 @@ test('New York midnight is canonical in winter/summer and across DST boundaries'
   assert.equal(millisecondsUntilNextDaily(new Date('2026-11-04T04:59:59.999Z')),1);
   assert.equal(addDailyDays('2027-02-28',1),'2027-03-01');
   assert.throws(()=>parseDateKey('2027-02-29'));
-  assert.equal(getDailyNumber('2026-09-03'),1);
 });
 
 test('every date has an exact frozen puzzle, original historical IDs survive, and missing dates never fall back',()=>{
@@ -111,7 +110,7 @@ test('handcrafted replacements only change future schedule entries and use new s
   const args={puzzle:handcrafted,overrides:[],puzzles:dailyPuzzles,config,ledger,calibration,today:'2026-11-03'};
   const plan=planDailyReplacement(args);
   assert.equal(plan.ledger.schedule[config.rolloutDate],handcrafted.id);
-  assert.equal(ledger.schedule[config.rolloutDate],puzzle.id);
+  assert.equal(ledger.schedule[config.rolloutDate],dailySchedule[config.rolloutDate]);
   assert.deepEqual(validateDailyBank({...options,puzzles:[...dailyPuzzles,handcrafted],overrides:plan.overrides,ledger:plan.ledger,schedule:{...dailySchedule,[config.rolloutDate]:handcrafted.id}}),[]);
   assert.throws(()=>planDailyReplacement({...args,today:config.rolloutDate}),/Published/);
   assert.throws(()=>planDailyReplacement({...args,puzzle:{...handcrafted,id:puzzle.id}}),/immutable/);
@@ -178,25 +177,37 @@ test('unknown/corrupt new schemas and failed writes preserve existing data',asyn
   await memory.recordActivity(puzzle,'session');assert.equal((await memory.getProgress(puzzle)).attempts.length,1);
 });
 
-test('recognizable future puzzles preserve the rollout day, original frozen bank, and difficulty mix',()=>{
+test('recognizable future puzzles preserve the original frozen bank and future difficulty bands',()=>{
   assert.equal(designedDailyPuzzles.length,364);
   assert.equal(new Set(designedDailyPuzzles.map(p=>p.design.motif)).size,22);
-  assert.equal(getDailyPuzzleForDate('2026-11-04').id,'daily-2026-11-04-v1');
+  assert.equal(getDailyPuzzleForDate('2026-11-04').id,'daily-2026-11-04-fox-v2');
   assert.equal(getDailyPuzzleForDate('2026-11-04').design,undefined);
   const mix={Challenging:0,Hard:0,Expert:0};
   for(const original of generatedDailyPuzzles){
     const active=getDailyPuzzleForDate(original.dateKey);
     mix[active.difficulty]++;
-    assert.equal(active.difficulty,original.difficulty);
     if(original.dateKey>dailyDesignBankConfig.preserveThrough){
+      assert.equal(active.difficulty,original.difficulty);
       assert.equal(active.version,2);assert.ok(active.design);assert.notEqual(active.id,original.id);
       const edgeKeys=new Set(active.edges.map(edge=>[...edge].sort((a,b)=>a-b).join(':')));
       assert.ok(active.design.contourEdges.length>=10);
       assert.ok(active.design.contourEdges.every(edge=>edgeKeys.has([...edge].sort((a,b)=>a-b).join(':'))));
     }
   }
-  assert.deepEqual(mix,config.difficultyCounts);
+  assert.deepEqual(mix,{...config.difficultyCounts,Hard:config.difficultyCounts.Hard-1,Expert:config.difficultyCounts.Expert+1});
   assert.ok(validateDailyBank({...options,designed:designedDailyPuzzles.slice(1)}).some(error=>error.includes('Missing designed date')));
+});
+
+test('launch Fox uses a new locked identity with the historical graph and palette unchanged',()=>{
+  const historical=handcraftedPuzzles.find(p=>p.id==='daily-002');
+  const launch=getDailyPuzzleForDate('2026-11-04');
+  assert.equal(historical.dateKey,'2026-09-22');
+  assert.equal(historical.version,1);
+  assert.deepEqual(launch,{...historical,id:'daily-2026-11-04-fox-v2',dateKey:'2026-11-04',version:2,source:'handcrafted'});
+  assert.equal(dailyOverrides.find(p=>p.dateKey==='2026-11-04').id,launch.id);
+  assert.equal(generatedDailyPuzzles[0].id,'daily-2026-11-04-v1');
+  assert.ok(dailyPuzzles.some(p=>p.id==='daily-2026-11-04-v1'));
+  assert.throws(()=>planDailyReplacement({puzzle:{...launch,id:'another-launch-fox'},overrides:dailyOverrides,puzzles:dailyPuzzles,config,ledger,calibration,today:'2026-11-04'}),/Published/);
 });
 
 test('recognizable designs reproduce exactly from the authored motif and seeded generator',async()=>{

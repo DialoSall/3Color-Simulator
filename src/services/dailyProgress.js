@@ -135,6 +135,15 @@ export function createDailyProgressService({storage = browserStorage(), now = ()
   }
   return {
     async getProgress(puzzle) { return getRecord(load(),puzzle); },
+    async getHistory({ startDate, endDate }) {
+      parseDateKey(startDate);
+      parseDateKey(endDate);
+      if (startDate > endDate) throw new Error('Invalid Daily history range.');
+      const schema = load();
+      return Object.values(schema.byPuzzleId).flatMap(bucket => Object.values(bucket))
+        .filter(record => record.dateKey >= startDate && record.dateKey <= endDate)
+        .sort((a,b) => a.dateKey.localeCompare(b.dateKey) || a.puzzleId.localeCompare(b.puzzleId));
+    },
     async recordActivity(puzzle, attemptId) {
       return update(puzzle, previous => {
         const playedAt = now();

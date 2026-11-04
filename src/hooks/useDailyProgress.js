@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { dailyProgressService, mergeDailyProgress, newDailyAttemptId } from "../services/dailyProgress.js";
 
-export function useDailyProgress(puzzle, service = dailyProgressService) {
+export function useDailyProgress(puzzle, service = dailyProgressService, onCompletionSaved) {
   const [progress, setProgress] = useState(null);
   const [progressError, setProgressError] = useState("");
   const attemptId = useRef(null);
   const queue = useRef(Promise.resolve());
   const mounted = useRef(false);
+  const completionSaved = useRef(onCompletionSaved);
+  useEffect(() => { completionSaved.current = onCompletionSaved; }, [onCompletionSaved]);
   useEffect(() => {
     mounted.current = true;
     let cancelled = false;
@@ -42,7 +44,11 @@ export function useDailyProgress(puzzle, service = dailyProgressService) {
   const completeAttempt = useCallback(result => {
     if (!attemptId.current) attemptId.current = newDailyAttemptId();
     const id = attemptId.current;
-    enqueue(()=>service.completeAttempt(puzzle,id,result));
+    enqueue(async () => {
+      const record = await service.completeAttempt(puzzle,id,result);
+      completionSaved.current?.();
+      return record;
+    });
   }, [enqueue,puzzle,service]);
   const replayAttempt = useCallback(() => { attemptId.current = null; }, []);
   return {bestResult: progress?.best ?? null, progressError, recordMove, recordReset, completeAttempt, replayAttempt};

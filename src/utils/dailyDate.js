@@ -1,5 +1,5 @@
 export const DAILY_TIME_ZONE = "America/New_York";
-export const DAILY_START_DATE = "2026-09-03";
+export const DAILY_LAUNCH_DATE = "2026-11-04";
 const DAY_MS = 86400000;
 const formatter = new Intl.DateTimeFormat("en-US", {
   timeZone: DAILY_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit",
@@ -20,10 +20,6 @@ export function parseDateKey(key) {
 
 export function addDailyDays(key, days) {
   return new Date(parseDateKey(key) + days * DAY_MS).toISOString().slice(0, 10);
-}
-
-export function getDailyNumber(key) {
-  return Math.round((parseDateKey(key) - parseDateKey(DAILY_START_DATE)) / DAY_MS) + 1;
 }
 
 export function millisecondsUntilNextDaily(date = new Date()) {

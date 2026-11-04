@@ -11,6 +11,8 @@ circles have different colors.
 - **Daily Puzzle:** an exact frozen schedule using America/New_York dates, with
   365 new puzzles from November 4, 2026 through November 3, 2027. Includes locally
   saved daily best results, attempts, replay, and shareable completion text.
+  Current/best streaks reward on-time solves. Select the date to revisit missed
+  puzzles from the November 4 launch; late solves mark completion without repairing a streak.
 - **Custom Graph:** generate 3–24 vertices with adjustable edge probability.
   Random graphs are not guaranteed to be 3-colorable.
 - **Seeded sharing:** share the exact custom graph's coordinates, connections,
@@ -67,6 +69,7 @@ npm run validate:levels
 npm run test:sharing
 npm run validate:daily
 npm run test:daily
+npm run test:retention
 npm run check:daily-generation
 npm run check:daily-designs
 npm run test:preview
@@ -93,7 +96,8 @@ campaign routes still enforce unlocks. The build checks this automatically.
 
 ## Maintaining Daily Puzzles
 
-Historical puzzles and November 4 retain their original data. November 5 onward
+November 4 launches with **Fox Face**, under its own new puzzle identity. Historical
+puzzles and the original generated safety bank retain their data. November 5 onward
 uses 22 authored motifs, including animals, objects, and symbols. Their outlines
 are actual puzzle connections, and every date has its own validated graph.
 

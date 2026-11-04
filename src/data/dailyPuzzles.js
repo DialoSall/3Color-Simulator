@@ -4,7 +4,7 @@ import { generatedDailyPuzzles } from "./daily/generated/index.js";
 import { handcraftedPuzzles } from "./daily/handcrafted.js";
 import { historicalSchedule } from "./daily/history.js";
 import { dailyOverrides } from "./daily/overrides.js";
-import { getDailyDateKey, getDailyNumber, parseDateKey } from "../utils/dailyDate.js";
+import { getDailyDateKey, parseDateKey } from "../utils/dailyDate.js";
 export { getDailyDateKey } from "../utils/dailyDate.js";
 
 function freeze(value) {
@@ -54,7 +54,7 @@ export function getDailyPuzzleForDate(dateKey) {
   if (!puzzle) throw new MissingDailyPuzzleError(dateKey);
   // The date override applies only to explicitly snapshotted historical repeats.
   // Original historical records, graph IDs, and graph data remain untouched.
-  const scheduled = Object.freeze({...puzzle, dateKey, dailyNumber: getDailyNumber(dateKey)});
+  const scheduled = Object.freeze({...puzzle, dateKey});
   scheduledPuzzles.set(dateKey,scheduled);
   return scheduled;
 }
