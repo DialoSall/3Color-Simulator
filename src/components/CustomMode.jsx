@@ -9,6 +9,7 @@ import GameSettings from "./GameSettings";
 import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
+import { IS_CRAZYGAMES } from "../platform";
 
 function resetGraphColors(graph) {
   return {
@@ -277,9 +278,9 @@ function handleVertexClick(vertexId) {
             </div>
           </details>
 
-          <button onClick={handleSharePuzzle}>Share Puzzle</button>
-          <p role="status">{shareMessage}</p>
-          {shareUrl && (
+          {!IS_CRAZYGAMES && <button onClick={handleSharePuzzle}>Share Puzzle</button>}
+          {!IS_CRAZYGAMES && <p role="status">{shareMessage}</p>}
+          {!IS_CRAZYGAMES && shareUrl && (
             <div className="formGroup">
               <label htmlFor="puzzleShareUrl">Puzzle link</label>
               <input

@@ -1,5 +1,7 @@
+import { IS_CRAZYGAMES } from "../platform.js";
+
 export function trackEvent(eventName, parameters = {}) {
-  if (typeof window === "undefined") {
+  if (IS_CRAZYGAMES || typeof window === "undefined") {
     return;
   }
 

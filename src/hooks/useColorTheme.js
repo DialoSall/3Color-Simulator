@@ -22,7 +22,7 @@ function getSavedThemeId() {
     return DEFAULT_THEME_ID;
   }
 
-  return window.localStorage.getItem(THEME_ID_KEY) ?? DEFAULT_THEME_ID;
+  try { return window.localStorage.getItem(THEME_ID_KEY) ?? DEFAULT_THEME_ID; } catch { return DEFAULT_THEME_ID; }
 }
 
 function getSavedCustomTheme() {
@@ -70,7 +70,7 @@ export function useColorTheme() {
       return;
     }
 
-    window.localStorage.setItem(THEME_ID_KEY, selectedThemeId);
+    try { window.localStorage.setItem(THEME_ID_KEY, selectedThemeId); } catch { /* Preferences remain usable in memory. */ }
   }, [selectedThemeId]);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export function useColorTheme() {
       return;
     }
 
-    window.localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(customTheme));
+    try { window.localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(customTheme)); } catch { /* Preferences remain usable in memory. */ }
   }, [customTheme]);
 
   const activeTheme = useMemo(() => {

@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { getThemeById, DEFAULT_THEME_ID } from "../data/colorThemes";
 import { getEdgeKey } from "../utils/graphValidation";
+import { IS_CRAZYGAMES } from "../platform";
 
 const HOLD_DELAY = 350;
 const MOVE_TOLERANCE = 12;
@@ -100,13 +101,14 @@ function GraphCanvas({
 
   useEffect(() => () => window.clearTimeout(holdTimer.current), []);
   useEffect(() => {
+    if (IS_CRAZYGAMES) return;
     const handleFullscreen = () => setFullscreen(document.fullscreenElement === canvas.current);
     document.addEventListener("fullscreenchange", handleFullscreen);
     return () => document.removeEventListener("fullscreenchange", handleFullscreen);
   }, []);
   useEffect(() => {
     // Return to the completion card when the last circle is colored in full screen.
-    if (solved && document.fullscreenElement === canvas.current) {
+    if (!IS_CRAZYGAMES && solved && document.fullscreenElement === canvas.current) {
       document.exitFullscreen().catch(() => {});
     }
   }, [solved]);
@@ -274,7 +276,7 @@ function GraphCanvas({
           </p>
         </div>
         <div className="graphZoom" role="group" aria-label="Graph zoom">
-          {typeof document !== "undefined" && document.fullscreenEnabled && (
+          {!IS_CRAZYGAMES && typeof document !== "undefined" && document.fullscreenEnabled && (
             <button type="button" aria-label={fullscreen ? "Exit full screen" : "Expand puzzle to full screen"} onClick={async () => {
               setDisplayMessage("");
               try {

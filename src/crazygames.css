@@ -1,0 +1,33 @@
+/* Loaded only by the standalone portal build. The web stylesheet is unchanged. */
+:root { scroll-padding: 8px; }
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); user-select: none; }
+input, textarea, .shareMessage { user-select: text; }
+.dailyCalendar { position: fixed; top: 12px; left: 12px; max-height: calc(100svh - 24px); }
+
+@media (min-width: 700px) and (max-height: 700px) {
+  .siteHeader { padding: 8px 16px; gap: 12px; }
+  .gameApp { padding: 10px 16px 20px; }
+  .gameHeading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .gameHeading h1 { font-size: 1.4rem; }
+  .gameHeading .eyebrow { margin-bottom: 2px; }
+  .gameHeading > p { font-size: 0.75rem; }
+  .gameApp .levelMap { margin-bottom: 8px; }
+  .levelMapSummary { padding: 8px 12px; }
+  .gameApp .gamePanel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, 45%); gap: 6px; padding: 10px; }
+  .gameApp .graphCanvasWrap, .gameApp .levelNavigation, .gameApp .completionCard { grid-column: 1 / -1; }
+  .gameApp .levelHeader { margin-bottom: 6px; }
+  .gameApp .levelHeader h2 { font-size: 1.15rem; }
+  .gameApp .levelHeader p { display: none; }
+  .gameApp .gameStatsBar { margin-bottom: 6px; gap: 6px; }
+  .gameApp .gameStatsBar div { padding: 5px 8px; }
+  .tutorialGuidance { padding: 8px 10px; gap: 6px; }
+  .tutorialGuidance p { margin: 2px 0; font-size: 0.8rem; }
+  .tutorialGuidance small { font-size: 0.68rem; }
+  .graphViewport { max-height: max(200px, calc(100svh - 310px)); }
+  .graphFooter { padding: 6px 10px; gap: 6px; }
+  .graphHint, .traceStatus { font-size: 0.68rem; }
+  .gameApp .levelNavigation { margin-top: 6px; }
+  .gameControls { gap: 10px; }
+  .dailyRetentionBar { gap: 8px; margin-bottom: 8px; }
+  .dailyStreaks { padding: 6px 10px; }
+}

@@ -85,6 +85,12 @@ After building, `npm run test:daily-routes:browser` checks navigation, result sh
 and offline reloads using an isolated Chrome profile. Requires Node 22+ and Chrome;
 set `CHROME_PATH` if Chrome is installed elsewhere.
 
+For the standalone CrazyGames Basic Launch upload, run `npm run build:crazygames`.
+It writes `dist-crazygames/` without changing `dist/`; use
+`npm run test:crazygames:browser` to test its nested static-host/iframe behavior.
+See [CrazyGames readiness](docs/crazygames-readiness.md) for platform differences,
+submission files, measurements, and remaining Developer Portal checks.
+
 Daily URLs have route-aware search/social metadata and a dynamic `/sitemap.xml`
 on Vercel. New public dates appear without a daily redeploy. See
 [Daily SEO and discovery](docs/daily-seo.md) for canonical rules, server functions,

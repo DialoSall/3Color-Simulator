@@ -133,3 +133,21 @@ test("progress, migration, calendar selection and streaks operate on metadata wi
   assert.equal(canSelectDailyDate("2026-11-05", "2026-11-04", dailySchedule), false);
   assert.equal((await service.getHistory({ startDate: "2026-11-03", endDate: "2026-11-03" }))[0].puzzleId, "daily-002");
 });
+
+test("nested-host cached month revisions stay scoped to their upload directory", async () => {
+  const payload = await filePayload(dailyPayloads["2026-11"]);
+  const responses = new Map([
+    ["https://portal.test/uploads/other/daily/2026-11.old.json", new Response(JSON.stringify(payload))],
+    ["https://portal.test/uploads/3color/daily/2026-11.old.json", new Response(JSON.stringify(payload))],
+  ]);
+  const matched = [];
+  const cacheStorage = { async open() { return {
+    async match(key) { const url = typeof key === "string" ? key : key.url; matched.push(url); return responses.get(url)?.clone(); },
+    async keys() { return [...responses.keys()].map(url => new Request(url)); },
+  }; } };
+  const readPayload = (url, validate) => readDailyPayload(url, validate, { cacheStorage, fetcher: async () => { throw new Error("offline"); } });
+  const load = createDailyPuzzleLoader({ payloads: { "2026-11": "https://portal.test/uploads/3color/daily/2026-11.new.json" }, getMetadata: getDailyMetadataForDate, readPayload });
+  assert.deepEqual(await load("2026-11-04"), sourcePuzzle("2026-11-04"));
+  assert.equal(matched.some(url => url.includes("/uploads/other/")), false);
+  assert.ok(matched.some(url => url.endsWith("/uploads/3color/daily/2026-11.old.json")));
+});

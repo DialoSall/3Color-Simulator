@@ -7,6 +7,7 @@ import DailyMode from "./components/DailyMode";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import AppHeader from "./components/AppHeader";
 import RouteMetadata from "./components/RouteMetadata";
+import { IS_CRAZYGAMES } from "./platform";
 
 const DevPreview = import.meta.env.DEV ? lazy(() => import("./dev/DevPreview.jsx")) : null;
 
@@ -16,8 +17,8 @@ function App() {
 
   return (
     <>
-      <RouteMetadata />
-      <AnalyticsTracker />
+      {!IS_CRAZYGAMES && <RouteMetadata />}
+      {!IS_CRAZYGAMES && <AnalyticsTracker />}
       <AppHeader />
 
       {hasSeed && location.pathname !== "/custom" ? (
@@ -27,7 +28,7 @@ function App() {
         />
       ) : (
         <Routes>
-          <Route path="/" element={<HomeScreen />} />
+          <Route path="/" element={IS_CRAZYGAMES ? <Navigate to="/levels/1" replace /> : <HomeScreen />} />
           <Route path="/levels" element={<Navigate to="/levels/1" replace />} />
           <Route path="/levels/:levelId" element={<LevelMode />} />
           <Route path="/custom" element={<CustomMode />} />

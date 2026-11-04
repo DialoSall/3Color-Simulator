@@ -2,12 +2,15 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import seoPlugin from "./server/seoPlugin.js";
+import crazygamesPlugin from "./server/crazygamesPlugin.js";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === "crazygames" ? "./" : "/",
+  build: mode === "crazygames" ? { outDir: "dist-crazygames", copyPublicDir: false } : {},
   plugins: [
     react(),
-    seoPlugin(),
-    VitePWA({
+    mode === "crazygames" ? crazygamesPlugin() : seoPlugin(),
+    mode !== "crazygames" && VitePWA({
       registerType: "autoUpdate",
       manifest: {
         name: "3Color",
@@ -47,4 +50,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));
