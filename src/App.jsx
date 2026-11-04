@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import HomeScreen from "./components/HomeScreen";
 import LevelMode from "./components/LevelMode";
@@ -5,6 +6,8 @@ import CustomMode from "./components/CustomMode";
 import DailyMode from "./components/DailyMode";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import AppHeader from "./components/AppHeader";
+
+const DevPreview = import.meta.env.DEV ? lazy(() => import("./dev/DevPreview.jsx")) : null;
 
 function App() {
   const location = useLocation();
@@ -27,6 +30,9 @@ function App() {
           <Route path="/levels/:levelId" element={<LevelMode />} />
           <Route path="/custom" element={<CustomMode />} />
           <Route path="/daily" element={<DailyMode />} />
+          {import.meta.env.DEV && <Route path="/dev/preview" element={
+            <Suspense fallback={<p role="status">Loading development preview…</p>}><DevPreview /></Suspense>
+          } />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}

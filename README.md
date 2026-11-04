@@ -8,9 +8,9 @@ circles have different colors.
 ## Features
 
 - **Campaign:** 30 progressive levels, unlocks, and progress saved on this device.
-- **Daily Puzzle:** UTC-dated challenges, locally saved daily best results, replay,
-  and shareable completion text. The latest published graph remains active until
-  a newer puzzle is available.
+- **Daily Puzzle:** an exact frozen schedule using America/New_York dates, with
+  365 new puzzles from November 4, 2026 through November 3, 2027. Includes locally
+  saved daily best results, attempts, replay, and shareable completion text.
 - **Custom Graph:** generate 3–24 vertices with adjustable edge probability.
   Random graphs are not guaranteed to be 3-colorable.
 - **Seeded sharing:** share the exact custom graph's coordinates, connections,
@@ -65,7 +65,48 @@ npm run lint
 npm run build
 npm run validate:levels
 npm run test:sharing
+npm run validate:daily
+npm run test:daily
+npm run check:daily-generation
+npm run check:daily-designs
+npm run test:preview
 ```
+
+## Development Preview
+
+Run `npm run dev` and select **Preview** in the header, or open
+`http://localhost:5173/dev/preview`.
+
+- **Daily bank:** choose any scheduled date, or use Previous / Next. The preview
+  starts at the next recognizable design and shows its ID, motif, difficulty,
+  and solver score.
+- **Campaign (all 30):** select any level, including locked levels.
+- Preview results stay in memory and do not update real campaign unlocks or Daily
+  progress. Reloading/leaving the tool clears its test session; **Reset test
+  progress** clears it immediately. Appearance, palette, and mute preferences are
+  shared with normal play.
+- **Copy puzzle JSON** exports the selected puzzle for review. Collapse the
+  development panel for more graph space.
+
+The route, controls, and styles are excluded from production builds; normal
+campaign routes still enforce unlocks. The build checks this automatically.
+
+## Maintaining Daily Puzzles
+
+Historical puzzles and November 4 retain their original data. November 5 onward
+uses 22 authored motifs, including animals, objects, and symbols. Their outlines
+are actual puzzle connections, and every date has its own validated graph.
+
+The official Daily graph is loaded from checked-in monthly data; it is never
+randomly generated in a player's browser. `npm run generate:daily` reproduces the
+original safety bank. `npm run generate:daily-designs` reproduces the recognizable
+design bank. Builds validate coverage, graph quality, and integrity locks.
+Missing dates show an unavailable message rather than reusing yesterday's graph.
+
+Use `npm run schedule:daily -- path/to/puzzle.json` for a handcrafted replacement
+on a future date. Extend the bank before November 4, 2027. See
+[Daily architecture and authoring](docs/daily-puzzles.md) for calibration, immutable
+IDs, replacement rules, and progress migration details.
 
 ## Future Ideas
 
