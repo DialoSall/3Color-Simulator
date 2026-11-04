@@ -40,10 +40,11 @@ integrity lock. Normal scheduling still rejects today/past dates. Original
 `daily-2026-11-04-v1` remains in the frozen safety bank, and any progress for that
 ID stays separate: it cannot mark the launch Fox completed or earn Fox streak credit.
 
-The compact calendar on `/daily`
-only selects scheduled dates from launch through today's New York date. Historical
-compatibility data stays internal; no puzzle numbers or dated archive routes are
-exposed. Past puzzles use the same graph lookup, progress hook, and gameplay.
+The compact calendar only selects scheduled dates from launch through today's
+New York date. `/daily` follows today; `/daily/YYYY-MM-DD` selects an exact public
+date. Historical compatibility data before launch stays internal; no puzzle
+numbers are exposed. Past puzzles use the same graph lookup, progress hook,
+and gameplay.
 
 `dailyRetention.js` derives current/best streaks from `firstCompletedAt`, converted
 to America/New_York. Only first completions on the puzzle's own date earn credit;
@@ -52,7 +53,44 @@ legacy puzzle IDs, and estimated migration timestamps cannot earn credit. An
 incomplete today preserves yesterday's consecutive run. No streak state is stored.
 The calendar supports keyboard navigation, Escape/outside dismissal, and focus
 restoration. Calendar open, past selection, and return-to-Today events reuse
-`trackEvent`; selection keeps the route unchanged.
+`trackEvent`.
+
+## Public date URLs
+
+The route parameter is the only selected-date state. Calendar selections navigate
+to `/daily/YYYY-MM-DD`, including a selection of today. Back to Today navigates
+to `/daily`. Browser back/forward restores the route's graph; an explicit date
+stays fixed across New York midnight while `/daily` advances. Streak/history
+queries remain anchored to the actual current New York day, independent of the
+selected date. Merely viewing a URL does not create an attempt or streak credit.
+
+DailyMode applies `canSelectDailyDate` before metadata lookup or lazy loading.
+Malformed, extra-segment, pre-launch, future, and missing dates show a generic
+unavailable message with a link to today's Daily. They render no puzzle metadata
+and request no graph payload. A valid but offline uncached month retains its
+existing reconnect/retry state and working calendar.
+
+`src/utils/dailyUrl.js` exports `getDailyPath(dateKey)` for client navigation and
+`getDailyUrl(dateKey)` for an absolute `https://3color.app/daily/YYYY-MM-DD` URL.
+These validate the date label; public availability remains DailyMode's policy.
+Result-sharing text and its existing `/daily` link are unchanged for now.
+
+`daily_history_select` fires once per historical route selection, including direct
+links and back/forward, rather than also firing in the calendar handler.
+`daily_return_today` retains button/calendar intent and adds the destination
+`date_key`; `daily_calendar_open` is unchanged. AnalyticsTracker recognizes all
+Daily routes as one mode, so moving between Daily dates does not add `game_start`.
+
+The existing Vercel catch-all rewrite serves the shell on direct load/refresh.
+Workbox's existing `/index.html` navigation fallback also handles dated URLs;
+hashed monthly JSON paths remain excluded and are never precached. Automated
+production-browser checks cover direct loads, refresh, back/forward, calendar
+URLs, analytics counts, lazy-month reuse, late completion, and offline dated
+navigation with the local server stopped. Run `npm run test:daily-routes` and,
+after building, `npm run test:daily-routes:browser`. The latter requires Node 22+
+and installed Chrome (or `CHROME_PATH`), uses a temporary profile/ephemeral port,
+and leaves the normal development server and browser profile untouched. Live
+Vercel deployment behavior still requires checking after publication.
 
 ## Recognizable designs and development review
 
@@ -104,8 +142,8 @@ continue to work. Copy puzzle JSON supports review/export, not publication.
 The route/link is guarded with `import.meta.env.DEV`, and its module/styles are
 lazily imported only in development. Production builds run
 `check:preview-production` after building to reject leaked preview code/styles.
-Date/preview URL parameters cannot unlock campaign levels or select a different
-official Daily in production. No public archive or editor was added.
+Development preview parameters cannot unlock campaign levels or bypass public
+Daily date restrictions in production. No puzzle editor was added.
 
 ## Offline generation and calibration
 

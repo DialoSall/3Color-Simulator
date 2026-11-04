@@ -30,6 +30,8 @@ function App() {
           <Route path="/levels/:levelId" element={<LevelMode />} />
           <Route path="/custom" element={<CustomMode />} />
           <Route path="/daily" element={<DailyMode />} />
+          <Route path="/daily/:dateKey" element={<DailyMode />} />
+          <Route path="/daily/*" element={<DailyMode />} />
           {import.meta.env.DEV && <Route path="/dev/preview" element={
             <Suspense fallback={<p role="status">Loading development preview…</p>}><DevPreview /></Suspense>
           } />}

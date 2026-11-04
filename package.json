@@ -22,6 +22,8 @@
     "test:homepage": "node --test scripts/homepage.test.js",
     "test:gameplay": "node --test scripts/gameplay.test.js",
     "test:daily-loading": "node --test scripts/dailyLoading.test.js",
+    "test:daily-routes": "node --test scripts/dailyRoutes.test.js",
+    "test:daily-routes:browser": "node --test scripts/dailyRoutes.browser.test.js",
     "check:daily-production": "node scripts/checkDailyProduction.js",
     "generate:daily-designs": "node scripts/generateDesignedDaily.js",
     "check:daily-designs": "node scripts/generateDesignedDaily.js --check",

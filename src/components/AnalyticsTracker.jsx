@@ -7,7 +7,7 @@ function getGameMode(pathname) {
     return "campaign";
   }
 
-  if (pathname === "/daily") {
+  if (pathname === "/daily" || pathname.startsWith("/daily/")) {
     return "daily";
   }
 
