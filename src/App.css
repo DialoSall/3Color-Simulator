@@ -101,151 +101,38 @@ select {
   font-weight: 500;
 }
 
-/* Home */
-.homeApp {
-  display: flex;
-  align-items: center;
-  min-height: calc(100svh - 80px);
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 56px 4vw;
-}
-
-.homeChallenge {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.9fr);
-  gap: clamp(32px, 5vw, 72px);
-  align-items: center;
-}
-
-.homeCopy { min-width: 0; }
-.homeCopy .eyebrow { font-size: 0.72rem; margin-bottom: 18px; }
-.homeCopy h1 {
-  font-size: clamp(2.8rem, 5vw, 4.7rem);
-  line-height: 1.06;
-  letter-spacing: -0.055em;
-  font-weight: 780;
-  margin: 0 0 22px;
-}
-.homeCopy h1 span { display: block; }
-.homeCopy .heroText {
-  color: var(--text-secondary);
-  font-size: 1.02rem;
-  line-height: 1.75;
-  font-weight: 400;
-  max-width: 450px;
-  margin: 0;
-}
-.homeStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-top: 22px;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-.homeStats span { display: inline-flex; align-items: center; gap: 8px; }
-.homeStats span::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
-.homeActions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 30px;
-}
-.homeActions button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  min-height: 52px;
-  width: 100%;
-  margin: 0;
-  padding: 14px 18px;
-  border-radius: 12px;
-  font-size: 0.92rem;
-  font-weight: 650;
-  line-height: 1.4;
-  text-align: center;
-}
-.homeActions .primaryHomeButton { background: var(--accent); color: var(--on-accent); border: 1px solid transparent; }
+/* A single Daily puzzle is the homepage's focus. */
+.homeApp { display: grid; place-items: center; min-height: calc(100svh - 80px); max-width: 760px; margin: 0 auto; padding: 32px 24px 40px; }
+.homeDaily { width: 100%; text-align: center; }
+.homeDailyHeading h1 { margin: 0 0 12px; color: var(--text-secondary); font-size: 1.1rem; font-weight: 550; letter-spacing: -0.025em; }
+.homeDailyHeading h2 { margin: 0 0 7px; color: var(--text); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; font-weight: 780; letter-spacing: -0.05em; }
+.homeDailyMeta { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+.homeDailyMeta > span { padding: 0 5px; }
+.homeDailyCompleted { display: inline-block; margin-top: 8px; color: var(--success); font-size: 0.78rem; font-weight: 650; }
+.dailyGraphPreview { width: 100%; max-width: 520px; margin: 22px auto 18px; pointer-events: none; }
+.homeGraph { display: block; width: 100%; height: clamp(190px, 34svh, 330px); overflow: visible; }
+.homeGraph line { stroke: var(--edge); stroke-width: 1.5; opacity: 0.65; vector-effect: non-scaling-stroke; }
+.homeGraph line.previewContour { stroke-width: 2.3; opacity: 1; }
+.homeGraph circle { fill: var(--surface); stroke: var(--preview-accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.homePreviewPalette { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.homePreviewPalette span { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); }
+.homeDailyStreak { margin: 0; min-height: 22px; color: var(--text); font-size: 0.95rem; font-weight: 650; line-height: 1.5; }
+.homeDailyBest { color: var(--muted); font-size: 0.82rem; font-weight: 450; white-space: nowrap; }
+.homeActions { max-width: 320px; margin: 18px auto 12px; }
+.homeActions .primaryHomeButton { width: 100%; min-height: 54px; margin: 0; padding: 14px 18px; border: 0; border-radius: 12px; background: var(--accent); color: var(--on-accent); font-size: 0.98rem; font-weight: 650; line-height: 1.4; }
 .homeActions .primaryHomeButton:hover { background: var(--accent-hover); }
-.homeActions .secondaryHomeButton { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); }
-.homeActions .secondaryHomeButton:hover { background: var(--raised); }
-.homeCopy .randomHomeButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 44px;
-  margin: 8px 0 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.86rem;
-  font-weight: 550;
-}
-.homeCopy .randomHomeButton:hover { background: var(--soft-fill); color: var(--text); }
-.homeMeta { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; }
-.homeMeta .shareHomeButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: auto;
-  min-height: 44px;
-  margin: 0;
-  padding: 8px 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 550;
-  white-space: nowrap;
-}
-.homeMeta .shareHomeButton:hover { background: transparent; color: var(--accent); filter: none; }
-.homePreviewCard {
-  width: 100%;
-  max-width: 440px;
-  justify-self: center;
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 24px;
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
-}
-.previewCardHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 0.72rem; }
-.previewCardHeader > span:first-child { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.65rem; font-weight: 650; }
-.previewGraph { padding: 18px 0 10px; }
-.previewSvg { width: 100%; height: auto; display: block; }
-.previewSvg line { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
-.previewSvg circle { stroke: var(--surface); stroke-width: 5; }
-.previewRed { fill: #ff535f; }
-.previewBlue { fill: #458bff; }
-.previewYellow { fill: #f5c849; }
-.previewCaption { display: flex; align-items: center; gap: 10px; padding-top: 18px; border-top: 1px solid var(--border); }
-.previewSolvedMark { flex-shrink: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--success-soft); color: var(--success); font-weight: 650; }
-.previewCaption strong { display: block; color: var(--text); font-size: 0.82rem; font-weight: 650; line-height: 1.5; }
-.previewCaption p { margin: 2px 0 0; color: var(--muted); font-size: 0.74rem; line-height: 1.5; }
-
-@media (max-width: 900px) {
-  .homeApp { padding: 40px 5vw; align-items: flex-start; }
-  .homeChallenge { grid-template-columns: 1fr; gap: 40px; max-width: 560px; margin: 0 auto; }
-  .homeCopy h1 { font-size: clamp(2.5rem, 7vw, 4rem); }
-  .homePreviewCard { max-width: 420px; }
-}
+.homeDailyRule { margin: 0; color: var(--text-secondary); font-size: 0.83rem; line-height: 1.5; }
+.homeCampaignLink { display: inline-flex; align-items: center; min-height: 44px; margin-top: 14px; color: var(--muted); font-size: 0.8rem; text-decoration: none; }
+.homeCampaignLink:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
+.homeDailyUnavailable { margin: 52px 0; color: var(--muted); }
+.homeDaily > .installPrompt { margin-top: 28px; text-align: left; box-shadow: none; }
 @media (max-width: 600px) {
-  .homeApp { min-height: calc(100svh - 112px); padding: 32px 5vw; }
-  .homeCopy .eyebrow { margin-bottom: 14px; }
-  .homeCopy .heroText { font-size: 0.94rem; line-height: 1.7; }
-  .homeActions { grid-template-columns: 1fr; gap: 10px; margin-top: 24px; }
-  .homePreviewCard { padding: 20px; border-radius: 18px; }
-}
-@media (max-width: 360px) {
-  .homeCopy h1 { font-size: 2.2rem; }
-  .homeStats { gap: 10px 12px; font-size: 0.72rem; }
+  .app.homeApp { min-height: calc(100svh - 112px); padding: 22px 6vw 28px; }
+  .homeDailyHeading h1 { margin-bottom: 10px; font-size: 1rem; }
+  .homeDailyHeading h2 { font-size: 2.2rem; }
+  .homeGraph { height: clamp(160px, 28svh, 240px); }
+  .dailyGraphPreview { margin: 20px auto 16px; }
+  .homeDailyStreak { font-size: 0.88rem; }
 }
 
 .shareMessage {
