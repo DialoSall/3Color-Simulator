@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test:sharing": "node --test scripts/puzzleSharing.test.js",
     "validate:levels": "node scripts/validateLevels.js",
-    "prebuild": "npm run validate:daily",
+    "prebuild": "npm run validate:daily && npm run check:daily-runtime",
+    "generate:daily-runtime": "node scripts/generateDailyRuntime.js",
+    "check:daily-runtime": "node scripts/generateDailyRuntime.js --check",
     "generate:daily": "node scripts/generateDaily.js",
     "check:daily-generation": "node scripts/generateDaily.js --check",
     "validate:daily": "node scripts/validateDaily.js",
@@ -19,13 +21,15 @@
     "test:retention": "node --test scripts/dailyRetention.test.js",
     "test:homepage": "node --test scripts/homepage.test.js",
     "test:gameplay": "node --test scripts/gameplay.test.js",
+    "test:daily-loading": "node --test scripts/dailyLoading.test.js",
+    "check:daily-production": "node scripts/checkDailyProduction.js",
     "generate:daily-designs": "node scripts/generateDesignedDaily.js",
     "check:daily-designs": "node scripts/generateDesignedDaily.js --check",
     "check:launch-fox": "node scripts/launchFoxOverride.js --check",
     "test:preview": "node --test scripts/devPreview.test.js",
     "test:tutorial": "node --test scripts/campaignTutorial.test.js",
     "check:preview-production": "node scripts/checkPreviewProduction.js",
-    "postbuild": "npm run check:preview-production"
+    "postbuild": "npm run check:preview-production && npm run check:daily-production"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import GraphCanvas from "./GraphCanvas";
 import { cloneGraph, cycleVertexColor, formatGameTime } from "../utils/gameplay";
 import { getConflicts, isSolved } from "../utils/graphValidation";
-import { dailySchedule, getDailyPuzzleForDate, MissingDailyPuzzleError } from "../data/dailyPuzzles";
+import { dailySchedule, getDailyMetadataForDate, MissingDailyPuzzleError } from "../data/dailyIndex";
+import { useDailyPuzzle } from "../hooks/useDailyPuzzle";
 import { useDailyDate } from "../hooks/useDailyDate";
 import { useDailyProgress } from "../hooks/useDailyProgress";
 import GameSettings from "./GameSettings";
@@ -31,12 +32,13 @@ function DailyMode({ progressService = dailyProgressService, previewDateKey } = 
   const streakLabel = history.loading ? "Loading streak…" : history.error ? "Streak unavailable"
     : streaks.current === 0 && !todayRecord?.completed ? "Start your streak today"
     : `${streaks.current} ${streaks.current === 1 ? "day" : "days"}`;
-  let puzzle;
+  let metadata;
   try {
-    if (isPreview || today >= DAILY_LAUNCH_DATE) puzzle = getDailyPuzzleForDate(dateKey);
+    if (isPreview || today >= DAILY_LAUNCH_DATE) metadata = getDailyMetadataForDate(dateKey);
   } catch (error) {
     if (!(error instanceof MissingDailyPuzzleError)) throw error;
   }
+  const { puzzle, loading, error, retry } = useDailyPuzzle(metadata ? dateKey : null);
 
   function chooseDate(date, source = "calendar") {
     if (!canSelectDailyDate(date, today, dailySchedule)) return;
@@ -64,7 +66,11 @@ function DailyMode({ progressService = dailyProgressService, previewDateKey } = 
     {!isPreview && history.error && <p role="status">{history.error}</p>}
     {puzzle ? <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} isToday={isToday} onCompletionSaved={history.refresh}
       currentStreak={!history.loading && !history.error && todayCredited ? streaks.current : 0} />
-      : <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : `The Daily puzzle for ${formatDailyDate(dateKey)} is unavailable. Please check back later.`}</p>}
+      : metadata ? <section className="dailyLoading gamePanel" aria-busy={loading}>
+        <h2>{metadata.name}</h2>
+        <p role="status">{loading ? "Loading puzzle…" : "This puzzle is not available right now. Reconnect and try again."}</p>
+        {error && <button type="button" className="dailyLoadRetry" onClick={retry}>Try again</button>}
+      </section> : <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : `The Daily puzzle for ${formatDailyDate(dateKey)} is unavailable. Please check back later.`}</p>}
   </main>;
 }
 

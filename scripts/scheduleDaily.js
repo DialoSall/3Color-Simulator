@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dailyOverrides } from "../src/data/daily/overrides.js";
 import { dailyBankConfig as config } from "../src/data/daily/config.js";
-import { dailyPuzzles } from "../src/data/dailyPuzzles.js";
+import { dailyPuzzles } from "./lib/dailyCatalog.js";
 import { getDailyDateKey } from "../src/utils/dailyDate.js";
 import { calibrateDaily } from "./lib/dailyCalibration.js";
 import { planDailyReplacement } from "./lib/dailyScheduling.js";
@@ -13,4 +13,4 @@ const existingLedger = JSON.parse(await readFile(ledgerPath,'utf8'));
 const {overrides,ledger} = planDailyReplacement({puzzle,overrides:dailyOverrides,puzzles:dailyPuzzles,config,ledger:existingLedger,calibration:calibrateDaily(),today:getDailyDateKey()});
 await writeFile(new URL('../src/data/daily/overrides.js',import.meta.url),`// Managed by npm run schedule:daily -- <handcrafted-puzzle.json>.\nexport const dailyOverrides = ${JSON.stringify(overrides,null,2)};\n`);
 await writeFile(ledgerPath,JSON.stringify(ledger,null,2)+'\n');
-console.log(`Scheduled ${puzzle.id} for ${puzzle.dateKey}. Run npm run validate:daily and review both changed files.`);
+console.log(`Scheduled ${puzzle.id} for ${puzzle.dateKey}. Run npm run validate:daily and npm run generate:daily-runtime, then review the override, ledger, and derived runtime files.`);

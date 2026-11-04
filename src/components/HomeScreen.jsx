@@ -3,7 +3,8 @@ import InstallPrompt from "./InstallPrompt";
 import DailyGraphPreview from "./DailyGraphPreview";
 import { useDailyDate } from "../hooks/useDailyDate";
 import { useDailyHistory } from "../hooks/useDailyHistory";
-import { getDailyPuzzleForDate, MissingDailyPuzzleError } from "../data/dailyPuzzles";
+import { getDailyMetadataForDate, MissingDailyPuzzleError } from "../data/dailyIndex";
+import { useDailyPuzzle } from "../hooks/useDailyPuzzle";
 import { dailyProgressService } from "../services/dailyProgress";
 import { DAILY_LAUNCH_DATE } from "../utils/dailyDate";
 import { formatDailyDate, getDailyStreaks } from "../utils/dailyRetention";
@@ -14,13 +15,14 @@ function HomeScreen({ progressService = dailyProgressService } = {}) {
   const today = useDailyDate();
   const launched = today >= DAILY_LAUNCH_DATE;
   const history = useDailyHistory(today, progressService, launched);
-  let puzzle;
+  let metadata;
   try {
-    if (launched) puzzle = getDailyPuzzleForDate(today);
+    if (launched) metadata = getDailyMetadataForDate(today);
   } catch (error) {
     if (!(error instanceof MissingDailyPuzzleError)) throw error;
   }
-  const completed = Boolean(history.records.find(record => record.dateKey === today && record.puzzleId === puzzle?.id)?.completed);
+  const { puzzle, loading, error, retry } = useDailyPuzzle(metadata ? today : null);
+  const completed = Boolean(history.records.find(record => record.dateKey === today && record.puzzleId === metadata?.id)?.completed);
   const streak = getDailyStreaks(history.records, today);
   const historyReady = launched && !history.loading && !history.error;
   const streakLabel = history.error ? "Streak unavailable" : !historyReady ? "Loading streak…"
@@ -29,7 +31,7 @@ function HomeScreen({ progressService = dailyProgressService } = {}) {
   function trackCta(event) {
     trackEvent(event, {
       date_key: today,
-      puzzle_id: puzzle?.id ?? "unavailable",
+      puzzle_id: metadata?.id ?? "unavailable",
       daily_completed: completed,
       daily_history_status: history.error ? "error" : history.loading ? "loading" : "ready",
     });
@@ -40,12 +42,16 @@ function HomeScreen({ progressService = dailyProgressService } = {}) {
       <section className="homeDaily" aria-labelledby="home-title">
         <header className="homeDailyHeading">
           <h1 id="home-title">Today's 3Color</h1>
-          <h2>{puzzle?.name ?? "Daily Puzzle"}</h2>
-          <p className="homeDailyMeta">{puzzle && <>{puzzle.difficulty} <span aria-hidden="true">·</span> </>}<time dateTime={today}>{formatDailyDate(today)}</time></p>
+          <h2>{metadata?.name ?? "Daily Puzzle"}</h2>
+          <p className="homeDailyMeta">{metadata && <>{metadata.difficulty} <span aria-hidden="true">·</span> </>}<time dateTime={today}>{formatDailyDate(today)}</time></p>
           {completed && <span className="homeDailyCompleted"><span aria-hidden="true">✓</span> Completed today</span>}
         </header>
 
-        {puzzle ? <DailyGraphPreview puzzle={puzzle} />
+        {puzzle ? <DailyGraphPreview puzzle={puzzle} /> : metadata ? <div className="dailyGraphPreview dailyPreviewPlaceholder" role="status" aria-busy={loading}>
+          <div className="homeGraph">{loading ? "Loading puzzle…" : "Preview unavailable. Reconnect to load this puzzle."}</div>
+          <div className="homePreviewPalette" aria-hidden="true"><span /></div>
+          {error && <button type="button" className="dailyLoadRetry" onClick={retry}>Try again</button>}
+        </div>
           : <p className="homeDailyUnavailable">{launched ? "Today's puzzle is unavailable." : "Daily puzzles begin November 4, 2026."}</p>}
 
         {launched && <p className="homeDailyStreak" role="status">

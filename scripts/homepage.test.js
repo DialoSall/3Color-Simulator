@@ -7,7 +7,7 @@ import { createServer } from "vite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getDailyPuzzleForDate } from "../src/data/dailyPuzzles.js";
+import { getDailyPuzzleForDate } from "./lib/dailyCatalog.js";
 
 test("Daily preview preserves actual layouts and theme, hides color assignments, and stays noninteractive", async () => {
   const cacheDir = await mkdtemp(join(tmpdir(), "3color-home-test-"));

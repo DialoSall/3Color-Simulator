@@ -70,6 +70,8 @@ npm run test:sharing
 npm run validate:daily
 npm run test:daily
 npm run test:retention
+npm run test:daily-loading
+npm run check:daily-runtime
 npm run check:daily-generation
 npm run check:daily-designs
 npm run test:preview
@@ -101,14 +103,20 @@ puzzles and the original generated safety bank retain their data. November 5 onw
 uses 22 authored motifs, including animals, objects, and symbols. Their outlines
 are actual puzzle connections, and every date has its own validated graph.
 
-The official Daily graph is loaded from checked-in monthly data; it is never
+The official Daily graph loads on demand from a content-hashed monthly JSON file;
+calendar/streak metadata does not load graphs. Loaded months remain available
+offline on this browser when storage is available; uncached months show a retry
+message. The PWA does not precache the year's graphs. Daily puzzles are never
 randomly generated in a player's browser. `npm run generate:daily` reproduces the
 original safety bank. `npm run generate:daily-designs` reproduces the recognizable
 design bank. Builds validate coverage, graph quality, and integrity locks.
 Missing dates show an unavailable message rather than reusing yesterday's graph.
 
 Use `npm run schedule:daily -- path/to/puzzle.json` for a handcrafted replacement
-on a future date. Extend the bank before November 4, 2027. See
+on a future date, then run `npm run generate:daily-runtime` to refresh the derived
+index and monthly payloads. Builds reject stale runtime data. Extend the bank
+before November 4, 2027. See [Daily loading and offline delivery](docs/daily-loading.md)
+for the runtime/build boundary and bundle measurements, and
 [Daily architecture and authoring](docs/daily-puzzles.md) for calibration, immutable
 IDs, replacement rules, and progress migration details.
 
