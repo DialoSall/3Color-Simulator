@@ -9,6 +9,7 @@ import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 import { useCampaignTutorial } from "../hooks/useCampaignTutorial";
+import { trackEvent } from "../utils/analytics";
 
 const PROGRESS_KEY = "3color-highest-completed-level";
 
@@ -96,6 +97,22 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
   const graphSectionRef = useRef(null);
   const completionCardRef = useRef(null);
   const completionSoundPlayedRef = useRef(false);
+  const completionTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (!solved) {
+      completionTrackedRef.current = false;
+      return;
+    }
+    if (isPreview || completionTrackedRef.current) return;
+    completionTrackedRef.current = true;
+    trackEvent("campaign_level_complete", {
+      level: currentLevel.id,
+      time_ms: elapsedMilliseconds,
+      recolors,
+      resets,
+    });
+  }, [solved, isPreview, currentLevel.id, elapsedMilliseconds, recolors, resets]);
 
 
   useEffect(() => {
