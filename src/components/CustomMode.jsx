@@ -10,6 +10,7 @@ import { useColorTheme } from "../hooks/useColorTheme";
 import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 import { IS_CRAZYGAMES } from "../platform";
+import { trackEvent } from "../utils/analytics";
 
 function resetGraphColors(graph) {
   return {
@@ -42,6 +43,7 @@ function CustomMode() {
   const [visitedVertices, setVisitedVertices] = useState(() => new Set());
   const [lastVertexId, setLastVertexId] = useState(null);
   const completionSoundPlayedRef = useRef(false);
+  const completionTrackedRef = useRef(false);
   const { soundEnabled, setSoundEnabled, playSound } = useSoundEffects();
   const {
     selectedThemeId,
@@ -73,6 +75,20 @@ function CustomMode() {
   const solved = useMemo(() => {
     return isSolved(currentGraph.vertices, currentGraph.edges);
   }, [currentGraph]);
+
+  useEffect(() => {
+    if (!solved) {
+      completionTrackedRef.current = false;
+      return;
+    }
+    if (completionTrackedRef.current) return;
+    completionTrackedRef.current = true;
+    trackEvent("custom_complete", {
+      vertex_count: currentGraph.vertices.length,
+      edge_count: currentGraph.edges.length,
+      recolors,
+    });
+  }, [solved, currentGraph.vertices.length, currentGraph.edges.length, recolors]);
 
   useEffect(() => {
     if (!solved) {

@@ -14,7 +14,7 @@ import { useSoundEffects } from "../hooks/useSoundEffects";
 import DailyCalendar from "./DailyCalendar";
 import { useDailyHistory } from "../hooks/useDailyHistory";
 import { dailyProgressService } from "../services/dailyProgress";
-import { DAILY_LAUNCH_DATE } from "../utils/dailyDate";
+import { DAILY_LAUNCH_DATE, getDailyDateKey } from "../utils/dailyDate";
 import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getDailyStreaks } from "../utils/dailyRetention";
 import { trackEvent } from "../utils/analytics";
 import { getDailyPath } from "../utils/dailyUrl";
@@ -110,6 +110,7 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
   const [timerRunning, setTimerRunning] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
   const completionSoundPlayedRef = useRef(false);
+  const trackedCompletionAttempts = useRef(new Set());
   const { soundEnabled, setSoundEnabled, playSound } = useSoundEffects();
 
   const {
@@ -177,13 +178,28 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
       completedAt: new Date().toISOString(),
     };
 
-    completeAttempt(result);
+    completeAttempt(result, (record, attemptId) => {
+      // Reset/recolor can save the same attempt again; only Replay allocates a new ID.
+      if (isPreview || trackedCompletionAttempts.current.has(attemptId)) return;
+      trackedCompletionAttempts.current.add(attemptId);
+      trackEvent("daily_complete", {
+        date_key: dailyPuzzle.dateKey,
+        difficulty: dailyPuzzle.difficulty,
+        is_today: getDailyDateKey(new Date(result.completedAt)) === dailyPuzzle.dateKey,
+        time_ms: result.timeMilliseconds,
+        recolors: result.recolors,
+        resets: result.resets,
+        first_completion: !record.attempts.some(attempt => attempt.id !== attemptId && attempt.completedAt),
+      });
+    });
   }, [
     solved,
     completeAttempt,
     elapsedMilliseconds,
     recolors,
     resets,
+    dailyPuzzle,
+    isPreview,
   ]);
 
   function handleVertexClick(vertexId) {

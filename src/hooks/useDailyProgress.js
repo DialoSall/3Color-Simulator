@@ -41,12 +41,13 @@ export function useDailyProgress(puzzle, service = dailyProgressService, onCompl
       enqueue(()=>service.recordActivity(puzzle,id));
     }
   }, [enqueue,puzzle,service]);
-  const completeAttempt = useCallback(result => {
+  const completeAttempt = useCallback((result, onSaved) => {
     if (!attemptId.current) attemptId.current = newDailyAttemptId();
     const id = attemptId.current;
     enqueue(async () => {
       const record = await service.completeAttempt(puzzle,id,result);
       completionSaved.current?.();
+      onSaved?.(record, id);
       return record;
     });
   }, [enqueue,puzzle,service]);

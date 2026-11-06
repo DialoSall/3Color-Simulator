@@ -11,6 +11,7 @@
     "postbuild:crazygames": "node scripts/checkCrazyGamesBuild.js",
     "test:crazygames:browser": "node --test scripts/crazygames.browser.test.js",
     "lint": "eslint .",
+    "test:analytics": "node --test scripts/analytics.test.js",
     "preview": "vite preview",
     "test:sharing": "node --test scripts/puzzleSharing.test.js",
     "test:daily-sharing": "node --test scripts/dailyResultSharing.test.js",
