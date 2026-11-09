@@ -1,0 +1,165 @@
+{
+  "baseline": "085618b94927935b840ba84728f9fb87fedc0f37",
+  "after": [
+    {
+      "level": 20,
+      "name": "The Gatehouse",
+      "crossings": 35,
+      "shallowCrossings": 0,
+      "crowdedEdges": 4,
+      "minSpacing": 156.47,
+      "minClearance": 30.08,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 21,
+      "name": "Mirror Maze",
+      "crossings": 15,
+      "shallowCrossings": 0,
+      "crowdedEdges": 1,
+      "minSpacing": 142.7,
+      "minClearance": 35.94,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 22,
+      "name": "Bridge Locks",
+      "crossings": 42,
+      "shallowCrossings": 0,
+      "crowdedEdges": 3,
+      "minSpacing": 143.96,
+      "minClearance": 30.06,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 23,
+      "name": "Three Chambers",
+      "crossings": 46,
+      "shallowCrossings": 0,
+      "crowdedEdges": 4,
+      "minSpacing": 127.53,
+      "minClearance": 30.11,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 24,
+      "name": "Circuit Board",
+      "crossings": 20,
+      "shallowCrossings": 0,
+      "crowdedEdges": 1,
+      "minSpacing": 141.03,
+      "minClearance": 34.6,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 25,
+      "name": "Lockstep",
+      "crossings": 15,
+      "shallowCrossings": 0,
+      "crowdedEdges": 0,
+      "minSpacing": 132.1,
+      "minClearance": 44.27,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 26,
+      "name": "Chain Reaction",
+      "crossings": 23,
+      "shallowCrossings": 0,
+      "crowdedEdges": 3,
+      "minSpacing": 136.95,
+      "minClearance": 31.03,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 27,
+      "name": "Signal Tower",
+      "crossings": 21,
+      "shallowCrossings": 0,
+      "crowdedEdges": 0,
+      "minSpacing": 118.85,
+      "minClearance": 49.64,
+      "crossingLowerBound": 0
+    },
+    {
+      "level": 28,
+      "name": "Circuit Breaker",
+      "crossings": 21,
+      "shallowCrossings": 0,
+      "crowdedEdges": 0,
+      "minSpacing": 140,
+      "minClearance": 56.04,
+      "crossingLowerBound": 3
+    },
+    {
+      "level": 29,
+      "name": "Core Pressure",
+      "crossings": 54,
+      "shallowCrossings": 0,
+      "crowdedEdges": 0,
+      "minSpacing": 114.02,
+      "minClearance": 44.87,
+      "crossingLowerBound": 4
+    },
+    {
+      "level": 30,
+      "name": "Endgame Relay",
+      "crossings": 78,
+      "shallowCrossings": 0,
+      "crowdedEdges": 0,
+      "minSpacing": 106.1,
+      "minClearance": 41.21,
+      "crossingLowerBound": 11
+    }
+  ],
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 1000,
+      "graphWidth": 886.140625,
+      "graphHeight": 640,
+      "minCircleDiameter": 49.22998046875,
+      "levelsChecked": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "clipped": false,
+      "horizontalOverflow": false,
+      "visibleLabels": 0,
+      "dailyPayloadRequests": 0
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "graphWidth": 338.625,
+      "graphHeight": 244.5625,
+      "minCircleDiameter": 18.812469482421875,
+      "levelsChecked": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "clipped": false,
+      "horizontalOverflow": false,
+      "visibleLabels": 0,
+      "dailyPayloadRequests": 0
+    }
+  }
+}

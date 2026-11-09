@@ -18,6 +18,8 @@
     "test:seo": "node --test scripts/seo.test.js",
     "check:seo-production": "node scripts/checkSeoProduction.js",
     "validate:levels": "node scripts/validateLevels.js",
+    "test:campaign-layouts": "node --test scripts/campaignLayouts.test.js",
+    "check:campaign-layouts:browser": "node scripts/campaignLayouts.browser.js",
     "prebuild": "npm run validate:daily && npm run check:daily-runtime",
     "generate:daily-runtime": "node scripts/generateDailyRuntime.js",
     "check:daily-runtime": "node scripts/generateDailyRuntime.js --check",
