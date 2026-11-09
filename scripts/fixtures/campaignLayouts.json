@@ -1,0 +1,295 @@
+{
+  "baseline": "085618b94927935b840ba84728f9fb87fedc0f37",
+  "edited": [
+    25,
+    27,
+    28,
+    29,
+    30
+  ],
+  "levels": [
+    {
+      "id": 1,
+      "identity": "c63b8dff71c016470cd26ec8424b9c8ed4f4b28d0a3919e0540db6479c214a1b",
+      "fullHash": "9cb4b7b4ea244aa1eb13999d6be1d315399cd0e2c6eb612400a641cede878861"
+    },
+    {
+      "id": 2,
+      "identity": "7a0bf794a6db06c58c43d865719e317d38969f23c3dfb426229a970dcbdf92b7",
+      "fullHash": "c37d45aa397dc9a3c4476959a8e69f4d51bdf1e9743fdabf6981080e93e8806e"
+    },
+    {
+      "id": 3,
+      "identity": "3b008ab0020010ec164778557c910436dbd24084aa98287f763f4a6d5403c947",
+      "fullHash": "b90f26f5de4d06266aa3c508031c03b1904223db2e4fc267ae10a13f2ba77ba5"
+    },
+    {
+      "id": 4,
+      "identity": "26fc98cc5634090654981ab279f175167c827da644426f04e92ac7ca0d840e78",
+      "fullHash": "140c9675a49a152d6867e9ed05dba56846240a3cf09c070ce4f1be5127334dd8"
+    },
+    {
+      "id": 5,
+      "identity": "f5427f3ec1eec6f1ec965b2a87e3547359017d1355f52af39e48f8890fae9b19",
+      "fullHash": "c986eb16a4dc75590054c80bb6148df215f082a1b0bf784e6fff5ba3be528696"
+    },
+    {
+      "id": 6,
+      "identity": "cbb9dc72a084ad676badd5174c96ee923c6d3e240229e9ca4c31b7210eacb4a9",
+      "fullHash": "54259f0b7c17d4802f7f9885cb102ebc16f870ec90e44543307053060985931f"
+    },
+    {
+      "id": 7,
+      "identity": "9c470b2ccff7e0c724c3b7a5fc9b5c53e3270038681de96a8685f359f743b46e",
+      "fullHash": "c10085ebb142ad03de713425e5dc1d617bfe8e93073449a10a8e5b91d070986d"
+    },
+    {
+      "id": 8,
+      "identity": "0cfa257021af6c921277184bb05b99ce9cfa01f66e1831266d70adbeed95dc79",
+      "fullHash": "7938ebab568e8afe6e0291f90f82e00fafd713972c660ed71f8dc3b082dc8d11"
+    },
+    {
+      "id": 9,
+      "identity": "28a2537efcf435c9c84b3284e6111698163d765e3fe3533c3525647937d118f9",
+      "fullHash": "f6073515793bbede18fc0acea99077e4a58bf62b61b530f160befbd360552d3d"
+    },
+    {
+      "id": 10,
+      "identity": "3ffd8fb1216a5527cf5c8632be406747ad52cc9b3474aceca15eee8287a87743",
+      "fullHash": "b6568c96354d09023fc1f57d69a4dc51fbd0374c9865fe4651651b08077f1791"
+    },
+    {
+      "id": 11,
+      "identity": "140323bcb4fd68d12b09fbab2f455f843874617005d1f30279f4c67d16be2d06",
+      "fullHash": "108c6d7e3ac42e2457a9c2b3511de1c41858fc87b8567f3aa521f576c9aa6263"
+    },
+    {
+      "id": 12,
+      "identity": "9993f7f5e167b80e15779db848435f02ac49d540ba00b454ad54266ffe81416e",
+      "fullHash": "04f8aa14041d59bc20649884a669062d0d418a956bbf19e33a7e3539a5eafcc2"
+    },
+    {
+      "id": 13,
+      "identity": "c1e044c27e5208abf982c112c363b4d7bcb7fb66f3f65a5e2e7e4094c0490ed9",
+      "fullHash": "e38d89df47eeb88d1fee2855c0225e776fa71bd2470b811c8e1ac9913003fb38"
+    },
+    {
+      "id": 14,
+      "identity": "768d06cbab4e22ce42f0953620bed3eadac105ccc9eb704990fb2dc0a16f320c",
+      "fullHash": "fdc81b04ff83331666d5633c80cae1dac16fe144451f9b0ac78494a81a35adea"
+    },
+    {
+      "id": 15,
+      "identity": "d8498a04dc0956c85a32c1b9d064ba23c88aa454082cb371be8722a608202ec7",
+      "fullHash": "f873e8700eecda1d38535078de1cd052e4c467c6d0f41507c737500e67c455bb"
+    },
+    {
+      "id": 16,
+      "identity": "f15620d62e258006f5cf5e6fbdee854ec2d644cdb592b7cb1b80c03a4d7c30d2",
+      "fullHash": "1f39ec010e6bfe6ebd00e96c2073994a43b7fc6ec135623e33422f974abfa246"
+    },
+    {
+      "id": 17,
+      "identity": "65e3ca3f313cf85961f1d09c7664d116576b97199d532666ab6022f6780bf01c",
+      "fullHash": "2099c8346a9b81ba52c55d731a392f731704e66d099ed18ea6909448945b302d"
+    },
+    {
+      "id": 18,
+      "identity": "cf504111c9a29d78582f5f77c0695ac7a4ab6218a19bdcfd029a7d463574dfa0",
+      "fullHash": "7c1abd39365284028dce8b7c2e8f5d39e45f39a4b23f5b2acd6151433874f577"
+    },
+    {
+      "id": 19,
+      "identity": "ef8fca92d2c8280170f3052cdf04550e1b3a563033d07d167667c81aecd2a0fd",
+      "fullHash": "13bf2c67ee73fbb9af4bccb15309da1cc30469862d71e8fb203bf00f3903b1c4"
+    },
+    {
+      "id": 20,
+      "identity": "e01092ec0a3b6d2dd9f36230325e5b8e17608b5b10e7e476aa24fb1c24797c04",
+      "fullHash": "6c4318a79bc180d400d0036b64c36459a0ba09f44105ce7604e375e7080c470d",
+      "before": {
+        "crossings": 35,
+        "shallowCrossings": 0,
+        "crowdedEdges": 4,
+        "minSpacing": 156.47,
+        "minClearance": 30.08,
+        "crossingLowerBound": 0
+      }
+    },
+    {
+      "id": 21,
+      "identity": "8d1bc6c728d6014b6bac3c0ee4b5ef2d3feefd3041ddae7f4a8e02251c1c13f2",
+      "fullHash": "f33edcd484aa4b4f9c2300f6dda77edb0c5f7ea42a5e23c17302842ce79b1e15",
+      "before": {
+        "crossings": 15,
+        "shallowCrossings": 0,
+        "crowdedEdges": 1,
+        "minSpacing": 142.7,
+        "minClearance": 35.94,
+        "crossingLowerBound": 0
+      }
+    },
+    {
+      "id": 22,
+      "identity": "51d2d2b3950865b32ee8840afc071d413762f73daed5c586cad5c6579d598039",
+      "fullHash": "7a13b4f93d3ff302c60b7645e466a1b86f0d1ac02d62518a16e3c4c0fc7f9db8",
+      "before": {
+        "crossings": 42,
+        "shallowCrossings": 0,
+        "crowdedEdges": 3,
+        "minSpacing": 143.96,
+        "minClearance": 30.06,
+        "crossingLowerBound": 0
+      }
+    },
+    {
+      "id": 23,
+      "identity": "8815d87c976208a5aaeb056d1e1a58260fd6a1b5c202b9e44696e343517fa6ca",
+      "fullHash": "56d1568514718cd6c8754e1fd6e1bcbca75bd5f38c5a3ad177e8eb1c9dbb8992",
+      "before": {
+        "crossings": 46,
+        "shallowCrossings": 0,
+        "crowdedEdges": 4,
+        "minSpacing": 127.53,
+        "minClearance": 30.11,
+        "crossingLowerBound": 0
+      }
+    },
+    {
+      "id": 24,
+      "identity": "32d46df6f0b5295d8095577c2fd1819ded537607fc7f38995486e00c24931c76",
+      "fullHash": "a47fff76c6713f90b460478a4f1c1fe7bbbe0887a51af5fa61eef7daae638c93",
+      "before": {
+        "crossings": 20,
+        "shallowCrossings": 0,
+        "crowdedEdges": 1,
+        "minSpacing": 141.03,
+        "minClearance": 34.6,
+        "crossingLowerBound": 0
+      }
+    },
+    {
+      "id": 25,
+      "identity": "9e5d27fbbe3535fa61b3d37bac9e1889a5057cde4fe050d1f271c52fccd6ad05",
+      "fullHash": "60f0af6a8e6bcbc5f1f1b59f9413d93eb364b81600573c737de7906156c8ea43",
+      "before": {
+        "crossings": 55,
+        "shallowCrossings": 1,
+        "crowdedEdges": 8,
+        "minSpacing": 82.38,
+        "minClearance": 30.13,
+        "crossingLowerBound": 0
+      },
+      "difficultyMetrics": {
+        "meanNodes": 65,
+        "meanBacktracks": 48,
+        "meanDecisions": 18.875,
+        "forcedRatio": 0.412,
+        "score": 294.75,
+        "density": 0.3,
+        "cycleRank": 21
+      }
+    },
+    {
+      "id": 26,
+      "identity": "077fd3a250f8f220fc7ba3a03e3ffcea90282ddbd8cba57412271056e3d913a9",
+      "fullHash": "d11a704478cd83ebb1554d35995b7da18815764012cb6c4de565fd49db37982e",
+      "before": {
+        "crossings": 23,
+        "shallowCrossings": 0,
+        "crowdedEdges": 3,
+        "minSpacing": 136.95,
+        "minClearance": 31.03,
+        "crossingLowerBound": 0
+      }
+    },
+    {
+      "id": 27,
+      "identity": "b89582c2555c4249c6e9bad164812b39291ac8a3a7b70e7a2a3213b37105c0d8",
+      "fullHash": "b3a39a5c4652b5638637decdc184b4ad187140fb33b62bf28b35d630e3375e50",
+      "before": {
+        "crossings": 79,
+        "shallowCrossings": 0,
+        "crowdedEdges": 11,
+        "minSpacing": 121.02,
+        "minClearance": 30.13,
+        "crossingLowerBound": 0
+      },
+      "difficultyMetrics": {
+        "meanNodes": 16,
+        "meanBacktracks": 0,
+        "meanDecisions": 5.125,
+        "forcedRatio": 0.525,
+        "score": 26.25,
+        "density": 0.3619,
+        "cycleRank": 24
+      }
+    },
+    {
+      "id": 28,
+      "identity": "8bffe93ea00a278c2c0070df83a82dbfe598111e1f22f87641291d9f31c8ed92",
+      "fullHash": "1932697c05f5415608b61237b578865543edbce4802ebb667bcc4409960c52d5",
+      "before": {
+        "crossings": 72,
+        "shallowCrossings": 2,
+        "crowdedEdges": 8,
+        "minSpacing": 82.66,
+        "minClearance": 30.22,
+        "crossingLowerBound": 3
+      },
+      "difficultyMetrics": {
+        "meanNodes": 21.5,
+        "meanBacktracks": 4.5,
+        "meanDecisions": 1.625,
+        "forcedRatio": 0.762,
+        "score": 42.75,
+        "density": 0.375,
+        "cycleRank": 30
+      }
+    },
+    {
+      "id": 29,
+      "identity": "b2b4ed8feb3523339fe6c13a38b63c36d2c506c971b4dad6be8ab3346277f32c",
+      "fullHash": "0e34b136f5f1ce601127ab75310a585d34ac972de5cf312701d662bd4cac0be2",
+      "before": {
+        "crossings": 203,
+        "shallowCrossings": 0,
+        "crowdedEdges": 16,
+        "minSpacing": 83.53,
+        "minClearance": 29.02,
+        "crossingLowerBound": 4
+      },
+      "difficultyMetrics": {
+        "meanNodes": 27.875,
+        "meanBacktracks": 9.875,
+        "meanDecisions": 7.25,
+        "forcedRatio": 0.521,
+        "score": 81.875,
+        "density": 0.3603,
+        "cycleRank": 33
+      }
+    },
+    {
+      "id": 30,
+      "identity": "b634283ce0cfab2e8bda8d014cd74614f87e3f8273d6a1eae75be654801f97ed",
+      "fullHash": "22f0b8d4b154d509637eab5daad3a315080e05c1a856765343d89fbf9856c03a",
+      "before": {
+        "crossings": 347,
+        "shallowCrossings": 7,
+        "crowdedEdges": 21,
+        "minSpacing": 84.38,
+        "minClearance": 29,
+        "crossingLowerBound": 11
+      },
+      "difficultyMetrics": {
+        "meanNodes": 88.125,
+        "meanBacktracks": 69.125,
+        "meanDecisions": 17.75,
+        "forcedRatio": 0.551,
+        "score": 400.125,
+        "density": 0.3856,
+        "cycleRank": 42
+      }
+    }
+  ]
+}
