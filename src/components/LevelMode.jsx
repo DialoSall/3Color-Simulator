@@ -10,6 +10,9 @@ import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 import { useCampaignTutorial } from "../hooks/useCampaignTutorial";
 import { trackEvent } from "../utils/analytics";
+import { useMobileLayout } from "../hooks/useMobileLayout";
+import MobileGameShell from "./MobileGameShell";
+import GameIconButton from "./GameIconButton";
 
 const PROGRESS_KEY = "3color-highest-completed-level";
 
@@ -46,6 +49,7 @@ function getLevelIndexFromParam(levelId) {
 
 function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {}) {
   const navigate = useNavigate();
+  const mobile = useMobileLayout();
   const params = useParams();
   const isPreview = import.meta.env.DEV && preview;
   const levelId = isPreview ? previewLevelId : params.levelId;
@@ -363,6 +367,120 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
     loadLevel(levelIndex + 1, true);
   }
 
+  const settings = inline => (
+    <GameSettings
+      inline={inline}
+      soundControl={
+        <SoundToggle
+          soundEnabled={soundEnabled}
+          onSoundEnabledChange={setSoundEnabled}
+          onPreviewSound={() => playSound("button", { force: true })}
+        />
+      }
+      selectedThemeId={selectedThemeId}
+      onThemeChange={setSelectedThemeId}
+      activeTheme={activeTheme}
+      customTheme={customTheme}
+      onCustomThemeChange={setCustomTheme}
+    />
+  );
+  const completion = solved && (
+    <div
+      className="completionCard"
+      ref={completionCardRef}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="completionBadge">✓</div>
+
+      <p className="completionEyebrow">Level {currentLevel.id} Complete</p>
+
+      {tutorial.reinforcement && <p className="tutorialReinforcement">That's it. Color every circle, and never let connected circles match.</p>}
+
+      <h3>
+        {levelIndex === levels.length - 1
+          ? (isPreview ? "Preview complete." : "You finished every level.")
+          : isPreview ? "Preview complete. Your campaign progress is unchanged." : `Level ${levelIndex + 2} unlocked.`}
+      </h3>
+
+      <div className="completionStats">
+        <div>
+          <span>Time</span>
+          <strong>{formatGameTime(elapsedMilliseconds)}</strong>
+        </div>
+
+        <div>
+          <span>Recolors</span>
+          <strong>{recolors}</strong>
+        </div>
+
+        <div>
+          <span>Resets</span>
+          <strong>{resets}</strong>
+        </div>
+      </div>
+
+      <div className="completionActions">
+        {tutorial.canReplay && <button className="completionSecondaryButton" onClick={() => { handleReplayLevel(); tutorial.replay(); }}>Replay tutorial</button>}
+        <button
+          className="completionSecondaryButton"
+          onClick={handleReplayLevel}
+        >
+          Replay Level
+        </button>
+
+        {levelIndex < levels.length - 1 && (
+          <button
+            className="completionPrimaryButton"
+            onClick={handleNextLevel}
+          >
+            Continue to Level {levelIndex + 2} →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const graph = (
+    <GraphCanvas
+      mobile={mobile}
+      controls={mobile && <>
+        <GameIconButton icon="previous" label="Previous level" disabled={!canGoPrevious} onClick={handlePreviousLevel} />
+        <GameIconButton icon="reset" label="Reset puzzle" onClick={handleReset} />
+        <GameIconButton icon="next" label="Next level" disabled={!canGoNext} onClick={handleNextLevel} />
+      </>}
+      key={currentLevel.id}
+      vertices={currentLevel.vertices}
+      edges={currentLevel.edges}
+      conflicts={conflicts}
+      onVertexClick={handleVertexClick}
+      width={currentLevel.width}
+      height={currentLevel.height}
+      colorTheme={activeTheme}
+      highlightedVertexIds={tutorial.guidance?.vertexIds}
+      highlightedEdges={tutorial.guidance?.edges}
+      interactiveVertexIds={tutorial.guidance?.allowedIds}
+      guidance={tutorial.step > 0 && (
+        <section className="tutorialGuidance" aria-label="Level 1 tutorial">
+          <div role="status" aria-live="polite" aria-atomic="true">
+            <span className="eyebrow">{mobile ? "" : "Quick start · "}Step {tutorial.step} of 4</span>
+            <p>{tutorial.guidance.message}</p>
+            {tutorial.step < 4 && <small>{tutorial.step === 3 ? "Change either highlighted circle." : "Follow the highlighted circle."} Tap, click, or use Enter / Space.</small>}
+          </div>
+          <button type="button" onClick={() => {
+            tutorial.skip();
+            graphSectionRef.current?.querySelector('.graphViewport')?.focus({ preventScroll: true });
+          }}>Skip tutorial</button>
+        </section>
+      )}
+    />
+  );
+  if (mobile) return <MobileGameShell boardRef={graphSectionRef} title={currentLevel.name} subtitle={`Level ${currentLevel.id} · ${currentLevel.difficulty}`} time={formatGameTime(elapsedMilliseconds)} conflicts={conflicts.length} recolors={recolors}
+    settings={() => settings(true)} description={currentLevel.description}
+    onReplayTutorial={currentLevel.id === 1 ? () => { handleReplayLevel(); tutorial.replay(); } : undefined}
+    menuContent={() => <><label>Campaign level<select aria-label="Campaign level" value={currentLevel.id} onChange={event => loadLevel(Number(event.target.value) - 1)}>{levels.map((level, index) => <option key={level.id} value={level.id} disabled={index > highestUnlocked}>{level.id} · {level.name}{index <= highestCompleted ? " · Completed" : index > highestUnlocked ? " · Locked" : ""}</option>)}</select></label><p>{Math.max(highestCompleted + 1, 0)} of {levels.length} completed · {resets} resets</p></>}
+  >{tutorial.storageError && <p role="status">{tutorial.storageError}</p>}{completion}{graph}</MobileGameShell>;
+
     return (
         <main className="app gameApp">
             <header className="gameHeading">
@@ -455,95 +573,16 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
                   <strong>{recolors}</strong>
                 </div>
 
-                <div>
+                <div className="conflictStat" role="status" aria-live="polite" aria-atomic="true">
                   <span>Conflicts</span>
                   <strong>{conflicts.length}</strong>
                 </div>
               </div>
 
-              {solved && (
-                <div
-                  className="completionCard"
-                  ref={completionCardRef}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="completionBadge">✓</div>
+              {completion}
 
-                  <p className="completionEyebrow">Level {currentLevel.id} Complete</p>
-
-                  {tutorial.reinforcement && <p className="tutorialReinforcement">That's it. Color every circle, and never let connected circles match.</p>}
-
-                  <h3>
-                    {levelIndex === levels.length - 1
-                      ? (isPreview ? "Preview complete." : "You finished every level.")
-                      : isPreview ? "Preview complete. Your campaign progress is unchanged." : `Level ${levelIndex + 2} unlocked.`}
-                  </h3>
-
-                  <div className="completionStats">
-                    <div>
-                      <span>Time</span>
-                      <strong>{formatGameTime(elapsedMilliseconds)}</strong>
-                    </div>
-
-                    <div>
-                      <span>Recolors</span>
-                      <strong>{recolors}</strong>
-                    </div>
-
-                    <div>
-                      <span>Resets</span>
-                      <strong>{resets}</strong>
-                    </div>
-                  </div>
-
-                  <div className="completionActions">
-                    {tutorial.canReplay && <button className="completionSecondaryButton" onClick={() => { handleReplayLevel(); tutorial.replay(); }}>Replay tutorial</button>}
-                    <button
-                      className="completionSecondaryButton"
-                      onClick={handleReplayLevel}
-                    >
-                      Replay Level
-                    </button>
-
-                    {levelIndex < levels.length - 1 && (
-                      <button
-                        className="completionPrimaryButton"
-                        onClick={handleNextLevel}
-                      >
-                        Continue to Level {levelIndex + 2} →
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
             
-              <GraphCanvas
-                key={currentLevel.id}
-                vertices={currentLevel.vertices}
-                edges={currentLevel.edges}
-                conflicts={conflicts}
-                onVertexClick={handleVertexClick}
-                width={currentLevel.width}
-                height={currentLevel.height}
-                colorTheme={activeTheme}
-                highlightedVertexIds={tutorial.guidance?.vertexIds}
-                highlightedEdges={tutorial.guidance?.edges}
-                interactiveVertexIds={tutorial.guidance?.allowedIds}
-                guidance={tutorial.step > 0 && (
-                  <section className="tutorialGuidance" aria-label="Level 1 tutorial">
-                    <div role="status" aria-live="polite" aria-atomic="true">
-                      <span className="eyebrow">Quick start · Step {tutorial.step} of 4</span>
-                      <p>{tutorial.guidance.message}</p>
-                      {tutorial.step < 4 && <small>{tutorial.step === 3 ? "Change either highlighted circle." : "Follow the highlighted circle."} Tap, click, or use Enter / Space.</small>}
-                    </div>
-                    <button type="button" onClick={() => {
-                      tutorial.skip();
-                      graphSectionRef.current?.querySelector('.graphViewport')?.focus({ preventScroll: true });
-                    }}>Skip tutorial</button>
-                  </section>
-                )}
-              />
+              {graph}
 
 
 
@@ -568,8 +607,7 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
               )}
             </div>
 
-            {!solved && (
-              <aside className="statusPanel gameControls">
+            {!solved && <aside className="statusPanel gameControls">
                 <p className="eyebrow">Status</p>
 
                 <div className="statusBox">
@@ -586,23 +624,9 @@ function LevelMode({ preview = false, previewLevelId, onPreviewLevelChange } = {
 
                 <button onClick={handleReset}>Reset Puzzle</button>
 
-                <GameSettings
-                  soundControl={
-                    <SoundToggle
-                      soundEnabled={soundEnabled}
-                      onSoundEnabledChange={setSoundEnabled}
-                      onPreviewSound={() => playSound("button", { force: true })}
-                    />
-                  }
-                  selectedThemeId={selectedThemeId}
-                  onThemeChange={setSelectedThemeId}
-                  activeTheme={activeTheme}
-                  customTheme={customTheme}
-                  onCustomThemeChange={setCustomTheme}
-                />
+                {settings(false)}
 
-              </aside>
-            )}
+              </aside>}
             </section>
             {tutorial.storageError && <p role="status">{tutorial.storageError}</p>}
         </main>

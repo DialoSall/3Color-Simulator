@@ -19,9 +19,13 @@ import { canSelectDailyDate, earnsDailyStreakCredit, formatDailyDate, getDailySt
 import { trackEvent } from "../utils/analytics";
 import { getDailyPath } from "../utils/dailyUrl";
 import { shareDailyResult } from "../utils/dailyResultSharing";
+import { useMobileLayout } from "../hooks/useMobileLayout";
+import MobileGameShell from "./MobileGameShell";
+import GameIconButton from "./GameIconButton";
 
 function DailyMode({ progressService = dailyProgressService, previewDateKey } = {}) {
   const today = useDailyDate();
+  const mobile = useMobileLayout();
   const params = useParams();
   const navigate = useNavigate();
   const isPreview = import.meta.env.DEV && Boolean(previewDateKey);
@@ -57,18 +61,7 @@ function DailyMode({ progressService = dailyProgressService, previewDateKey } = 
     navigate(source === "button" ? "/daily" : getDailyPath(date));
   }
 
-  if (!metadata) return <main className="app gameApp">
-    <header className="gameHeading"><div><p className="eyebrow">Daily Puzzle</p><h1>Daily Puzzle</h1></div></header>
-    <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : "This Daily puzzle is unavailable."}</p>
-    <Link to="/daily">Back to today's Daily</Link>
-  </main>;
-
-  return <main className="app gameApp">
-    <header className="gameHeading">
-      <div><p className="eyebrow">Daily Puzzle</p><h1>{isPreview ? "Daily Puzzle Preview" : isToday ? "Today's 3Color" : "Past Daily Puzzle"}</h1></div>
-      <p>Connected circles must have different colors.</p>
-    </header>
-    {isPreview ? <p className="eyebrow">{formatDailyDate(dateKey)}</p> : today >= DAILY_LAUNCH_DATE && <div className="dailyRetentionBar">
+  const dailyControls = (isPreview ? <p className="eyebrow">{formatDailyDate(dateKey)}</p> : today >= DAILY_LAUNCH_DATE && <div className="dailyRetentionBar">
       <DailyCalendar dateKey={dateKey} today={today} records={history.records} loading={history.loading} error={history.error} schedule={dailySchedule}
         onSelect={chooseDate} onOpen={() => { history.refresh(); trackEvent("daily_calendar_open", { date_key: dateKey }); }} />
       {!isToday && <button type="button" className="dailyTodayButton" onClick={() => chooseDate(today, "button")}>Back to Today</button>}
@@ -78,19 +71,33 @@ function DailyMode({ progressService = dailyProgressService, previewDateKey } = 
         </strong>
         <span className="dailyStreakBest">Best: {history.loading ? "…" : history.error ? "—" : `${streaks.best} ${streaks.best === 1 ? "day" : "days"}`}</span>
       </div>
-    </div>}
-    {!isPreview && history.error && <p role="status">{history.error}</p>}
-    {puzzle ? <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} isToday={isToday} onCompletionSaved={history.refresh}
-      currentStreak={!history.loading && !history.error && todayCredited ? streaks.current : 0} />
-      : <section className="dailyLoading gamePanel" aria-busy={loading}>
+    </div>);
+  if (!metadata && mobile) return <MobileGameShell title="Daily puzzle unavailable" subtitle="Daily"><p role="status">This Daily puzzle is unavailable.</p><Link to="/daily">Back to today's Daily</Link></MobileGameShell>;
+  if (!metadata) return <main className="app gameApp">
+    <header className="gameHeading"><div><p className="eyebrow">Daily Puzzle</p><h1>Daily Puzzle</h1></div></header>
+    <p role="status">{today < DAILY_LAUNCH_DATE ? "Daily puzzles launch November 4, 2026." : "This Daily puzzle is unavailable."}</p>
+    <Link to="/daily">Back to today's Daily</Link>
+  </main>;
+
+  const desktopHeader = <><header className="gameHeading">
+      <div><p className="eyebrow">Daily Puzzle</p><h1>{isPreview ? "Daily Puzzle Preview" : isToday ? "Today's 3Color" : "Past Daily Puzzle"}</h1></div>
+      <p>Connected circles must have different colors.</p>
+    </header>
+    {dailyControls}
+    {!isPreview && history.error && <p role="status">{history.error}</p>}</>;
+  if (puzzle) return <DailyGame key={`${dateKey}:${puzzle.id}`} dailyPuzzle={puzzle} progressService={progressService} preview={isPreview} isToday={isToday} onCompletionSaved={history.refresh}
+    currentStreak={!history.loading && !history.error && todayCredited ? streaks.current : 0} dailyControls={dailyControls} historyError={history.error} desktopHeader={desktopHeader} />;
+  if (mobile) return <MobileGameShell title={metadata.name} subtitle="Daily"><p role="status">{loading ? "Loading puzzle…" : "This puzzle is unavailable. Reconnect and try again."}</p>{error && <button type="button" onClick={retry}>Try again</button>}</MobileGameShell>;
+  return <main className="app gameApp">{desktopHeader}<section className="dailyLoading gamePanel" aria-busy={loading}>
         <h2>{metadata.name}</h2>
         <p role="status">{loading ? "Loading puzzle…" : "This puzzle is not available right now. Reconnect and try again."}</p>
         {error && <button type="button" className="dailyLoadRetry" onClick={retry}>Try again</button>}
-      </section>}
-  </main>;
+      </section></main>;
+
 }
 
-function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletionSaved, currentStreak }) {
+function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletionSaved, currentStreak, dailyControls, historyError, desktopHeader }) {
+  const mobile = useMobileLayout();
   const isPreview = import.meta.env.DEV && preview;
   const {
     bestResult: savedCompletion, progressError, recordMove, recordReset,
@@ -282,8 +289,103 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
     if (feedback !== null) setShareMessage(feedback);
   }
 
+  const settings = inline => (
+    <GameSettings
+      inline={inline}
+      soundControl={inline && <SoundToggle soundEnabled={soundEnabled} onSoundEnabledChange={setSoundEnabled} onPreviewSound={() => playSound("button", { force: true })} />}
+      selectedThemeId={usePuzzleTheme ? dailyPuzzle.theme.id : selectedThemeId}
+      onThemeChange={(themeId) => {
+        setUsePuzzleTheme(false);
+        setSelectedThemeId(themeId);
+      }}
+      activeTheme={usePuzzleTheme ? dailyPuzzle.theme : activeTheme}
+      customTheme={customTheme}
+      onCustomThemeChange={setCustomTheme}
+  />
+  );
+  const completion = solved && (
+    <div className="completionCard" role="status" aria-live="polite">
+      <div className="completionBadge">✓</div>
+
+      <p className="completionEyebrow">{isPreview ? "Daily Preview Complete" : "Daily Puzzle Complete"}</p>
+
+      <h3>{isPreview ? "This test result stays in your preview session." : isToday ? "You completed today’s puzzle." : `You completed the puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}.`}</h3>
+
+      {!isPreview && isToday && currentStreak > 0 && <div className="dailyStreakReinforcement">
+        <strong><span aria-hidden="true">🔥</span>{" "}{currentStreak === 1 ? "Streak started!" : `${currentStreak}-day streak!`}</strong>
+        <p>Come back tomorrow to keep it going.</p>
+      </div>}
+
+      <div className="completionStats">
+        <div>
+          <span>Best Time</span>
+          <strong>
+            {formatGameTime(
+              savedCompletion?.timeMilliseconds ?? elapsedMilliseconds
+            )}
+          </strong>
+        </div>
+
+        <div>
+          <span>Recolors</span>
+          <strong>{savedCompletion?.recolors ?? recolors}</strong>
+        </div>
+
+        <div>
+          <span>Resets</span>
+          <strong>{savedCompletion?.resets ?? resets}</strong>
+        </div>
+      </div>
+
+      <div className="completionActions">
+        <button
+          className="completionSecondaryButton"
+          onClick={handleReplayDailyPuzzle}
+        >
+          Replay Daily Puzzle
+        </button>
+
+        {!isPreview && <button
+          className="completionPrimaryButton"
+          onClick={handleShareResult}
+        >
+          Share Result
+        </button>}
+      </div>
+
+      {shareMessage && <p className="shareMessage">{shareMessage}</p>}
+    </div>
+  );
+
+  const graph = (
+    <GraphCanvas
+      mobile={mobile}
+      controls={mobile && <GameIconButton icon="reset" label="Reset puzzle" onClick={handleResetColors} />}
+      vertices={currentPuzzle.vertices}
+      edges={currentPuzzle.edges}
+      conflicts={conflicts}
+      onVertexClick={handleVertexClick}
+      width={currentPuzzle.width}
+      height={currentPuzzle.height}
+      colorTheme={usePuzzleTheme ? dailyPuzzle.theme : activeTheme}
+      design={dailyPuzzle.design}
+      toolbar={
+        !mobile && <SoundToggle
+          soundEnabled={soundEnabled}
+          onSoundEnabledChange={setSoundEnabled}
+          onPreviewSound={() => playSound("button", { force: true })}
+        />
+      }
+     />
+  );
+  if (mobile) return <MobileGameShell title={dailyPuzzle.name} subtitle={`${formatDailyDate(dailyPuzzle.dateKey, {month: "short", day: "numeric"})} · ${dailyPuzzle.difficulty}`} time={formatGameTime(elapsedMilliseconds)} conflicts={conflicts.length} recolors={recolors}
+    settings={() => settings(true)} description={dailyPuzzle.description}
+    menuContent={() => <>{dailyControls}{historyError && <p role="status">{historyError}</p>}<p>{savedCompletion ? `Completed · Best ${formatGameTime(savedCompletion.timeMilliseconds)}` : "Not completed yet"} · {resets} resets</p></>}
+  >{progressError && <p role="status">{progressError}</p>}{completion}{graph}</MobileGameShell>;
+
   return (
-    <>
+    <main className="app gameApp">
+      {desktopHeader}
       {progressError && <p role="status">{progressError}</p>}
 
       <section className={`gameLayout ${solved ? "gameLayoutSolved" : ""}`}>
@@ -311,87 +413,18 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
               <strong>{resets}</strong>
             </div>
 
-            <div>
+            <div className="conflictStat" role="status" aria-live="polite" aria-atomic="true">
               <span>Conflicts</span>
               <strong>{conflicts.length}</strong>
             </div>
           </div>
 
-          {solved && (
-            <div className="completionCard" role="status" aria-live="polite">
-              <div className="completionBadge">✓</div>
+          {completion}
 
-              <p className="completionEyebrow">{isPreview ? "Daily Preview Complete" : "Daily Puzzle Complete"}</p>
-
-              <h3>{isPreview ? "This test result stays in your preview session." : isToday ? "You completed today’s puzzle." : `You completed the puzzle for ${formatDailyDate(dailyPuzzle.dateKey)}.`}</h3>
-
-              {!isPreview && isToday && currentStreak > 0 && <div className="dailyStreakReinforcement">
-                <strong><span aria-hidden="true">🔥</span>{" "}{currentStreak === 1 ? "Streak started!" : `${currentStreak}-day streak!`}</strong>
-                <p>Come back tomorrow to keep it going.</p>
-              </div>}
-
-              <div className="completionStats">
-                <div>
-                  <span>Best Time</span>
-                  <strong>
-                    {formatGameTime(
-                      savedCompletion?.timeMilliseconds ?? elapsedMilliseconds
-                    )}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>Recolors</span>
-                  <strong>{savedCompletion?.recolors ?? recolors}</strong>
-                </div>
-
-                <div>
-                  <span>Resets</span>
-                  <strong>{savedCompletion?.resets ?? resets}</strong>
-                </div>
-              </div>
-
-              <div className="completionActions">
-                <button
-                  className="completionSecondaryButton"
-                  onClick={handleReplayDailyPuzzle}
-                >
-                  Replay Daily Puzzle
-                </button>
-
-                {!isPreview && <button
-                  className="completionPrimaryButton"
-                  onClick={handleShareResult}
-                >
-                  Share Result
-                </button>}
-              </div>
-
-              {shareMessage && <p className="shareMessage">{shareMessage}</p>}
-            </div>
-          )}
-
-          <GraphCanvas
-            vertices={currentPuzzle.vertices}
-            edges={currentPuzzle.edges}
-            conflicts={conflicts}
-            onVertexClick={handleVertexClick}
-            width={currentPuzzle.width}
-            height={currentPuzzle.height}
-            colorTheme={usePuzzleTheme ? dailyPuzzle.theme : activeTheme}
-            design={dailyPuzzle.design}
-            toolbar={
-              <SoundToggle
-                soundEnabled={soundEnabled}
-                onSoundEnabledChange={setSoundEnabled}
-                onPreviewSound={() => playSound("button", { force: true })}
-              />
-            }
-           />
+          {graph}
         </div>
 
-        {!solved && (
-          <aside className="statusPanel gameControls">
+        {!solved && <aside className="statusPanel gameControls">
             <p className="eyebrow">Daily Status</p>
 
             <div className={savedCompletion ? "statusBox solved" : "statusBox"}>
@@ -408,21 +441,11 @@ function DailyGame({ dailyPuzzle, progressService, preview, isToday, onCompletio
 
             <button onClick={handleResetColors}>Reset Puzzle</button>
 
-            <GameSettings
-                selectedThemeId={usePuzzleTheme ? dailyPuzzle.theme.id : selectedThemeId}
-                onThemeChange={(themeId) => {
-                  setUsePuzzleTheme(false);
-                  setSelectedThemeId(themeId);
-                }}
-                activeTheme={usePuzzleTheme ? dailyPuzzle.theme : activeTheme}
-                customTheme={customTheme}
-                onCustomThemeChange={setCustomTheme}
-            />
+            {settings(false)}
 
-          </aside>
-        )}
+          </aside>}
       </section>
-    </>
+    </main>
   );
 }
 

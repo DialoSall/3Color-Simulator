@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { getThemeById, DEFAULT_THEME_ID } from "../data/colorThemes";
 import { getEdgeKey } from "../utils/graphValidation";
 import { IS_CRAZYGAMES } from "../platform";
+import GameIconButton from "./GameIconButton";
 
 const HOLD_DELAY = 350;
 const MOVE_TOLERANCE = 12;
@@ -27,6 +28,8 @@ function GraphCanvas({
   highlightedVertexIds = [],
   highlightedEdges = [],
   interactiveVertexIds = null,
+  mobile = false,
+  controls = null,
 }) {
   const activeTheme = colorTheme ?? getThemeById(DEFAULT_THEME_ID);
   const [hoveredId, setHoveredId] = useState(null);
@@ -39,24 +42,37 @@ function GraphCanvas({
   const canvas = useRef(null);
   const viewport = useRef(null);
   const zoomAnchor = useRef(null);
+  const initialViewApplied = useRef(false);
   const holdTimer = useRef(null);
   const pointer = useRef(null);
   const suppressClick = useRef(false);
   const hintId = useId();
   const guidanceId = useId();
   const solved = vertices.every((vertex) => vertex.color !== null) && conflicts.length === 0;
+  const hasGuidance = Boolean(guidance);
 
   useLayoutEffect(() => {
     const element = viewport.current;
     const measure = () => {
       const availableWidth = element.getBoundingClientRect().width;
       const maxHeight = parseFloat(getComputedStyle(element).maxHeight);
+      const mobileHeight = mobile ? canvas.current.parentElement.clientHeight
+        - (canvas.current.querySelector('.graphFooter')?.offsetHeight ?? 0)
+        - (canvas.current.querySelector('.tutorialGuidance')?.offsetHeight ?? 0) : 0;
       const availableHeight = document.fullscreenElement === canvas.current
         ? element.clientHeight
-        : Number.isFinite(maxHeight) ? maxHeight : window.innerHeight;
+        : mobile ? Math.max(1, mobileHeight) : Number.isFinite(maxHeight) ? maxHeight : window.innerHeight;
       if (!availableWidth || !availableHeight) return;
       const scale = Math.min(availableWidth / width, availableHeight / height);
       const next = { width: width * scale, height: height * scale, viewportWidth: availableWidth };
+      if (mobile && !initialViewApplied.current) {
+        initialViewApplied.current = true;
+        const playZoom = hasGuidance ? 100 : Math.max(100, Math.min(200, Math.floor(availableHeight / next.height * 10) * 10));
+        if (playZoom > 100) {
+          zoomAnchor.current = { x: next.width / 2, y: next.height / 2 };
+          setZoom(playZoom);
+        }
+      }
       setFitSize((previous) => previous &&
         Math.abs(previous.width - next.width) < 0.5 &&
         Math.abs(previous.height - next.height) < 0.5 &&
@@ -65,12 +81,23 @@ function GraphCanvas({
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(element);
+    if (mobile) {
+      observer.observe(canvas.current.parentElement);
+      const instructions = canvas.current.querySelector('.tutorialGuidance');
+      if (instructions) observer.observe(instructions);
+    }
     window.addEventListener("resize", measure);
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [width, height, fullscreen]);
+  }, [width, height, fullscreen, mobile, hasGuidance]);
+
+  useLayoutEffect(() => {
+    if (!mobile || !hasGuidance) return;
+    setZoom(100);
+    viewport.current?.scrollTo({ top: 0, left: 0 });
+  }, [mobile, hasGuidance]);
 
   useLayoutEffect(() => {
     const anchor = zoomAnchor.current;
@@ -164,7 +191,7 @@ function GraphCanvas({
   }
 
   return (
-    <div ref={canvas} className={`graphCanvasWrap ${hasActiveVertex ? "isTracing" : ""} ${design ? "hasDesign" : ""}`}>
+    <div ref={canvas} data-zoom={zoom} className={`graphCanvasWrap ${hasActiveVertex ? "isTracing" : ""} ${design ? "hasDesign" : ""} ${hasGuidance ? "withGuidance" : ""}`}>
       {guidance && <div id={guidanceId}>{guidance}</div>}
       {toolbar && <div className="graphToolbar">{toolbar}</div>}
       <div className="graphViewport" ref={viewport} tabIndex={0} aria-label="Puzzle canvas. Zoom in for larger circles, then scroll to explore.">
@@ -267,17 +294,19 @@ function GraphCanvas({
       </div>
       </div>
       <div className="graphFooter">
-        <div>
+        <div className="graphFeedback">
           <p id={hintId} className="graphHint">Tap to color · Hover or hold a circle to trace connections</p>
           <p className="traceStatus" role="status" aria-live="polite">
           {solved
             ? (fullscreen ? "Puzzle complete! Exit to continue." : "Puzzle complete!")
-            : hasActiveVertex ? `Tracing ${adjacentVertexIds.size} connections` : displayMessage}
+            : hasActiveVertex ? `Tracing ${adjacentVertexIds.size} connections` : displayMessage || (mobile && zoom > 100 ? "Drag to explore · Fit for overview" : "")}
           </p>
         </div>
+        <div className="graphActions">
+          {controls}
         <div className="graphZoom" role="group" aria-label="Graph zoom">
           {!IS_CRAZYGAMES && typeof document !== "undefined" && document.fullscreenEnabled && (
-            <button type="button" aria-label={fullscreen ? "Exit full screen" : "Expand puzzle to full screen"} onClick={async () => {
+            <GameIconButton icon={fullscreen ? "minimize" : "maximize"} label={fullscreen ? "Exit full screen" : "Expand puzzle to full screen"} onClick={async () => {
               setDisplayMessage("");
               try {
                 if (fullscreen) await document.exitFullscreen();
@@ -285,15 +314,17 @@ function GraphCanvas({
               } catch {
                 setDisplayMessage("Full screen is unavailable. Use zoom to enlarge the graph.");
               }
-            }}>{fullscreen ? "Exit" : "Expand"}</button>
+            }} />
           )}
-          <button type="button" aria-label="Zoom out" disabled={zoom === 100} onClick={() => changeZoom(-10)}>−</button>
-          <button type="button" aria-label="Fit graph to screen" onClick={() => {
+          <GameIconButton icon="minus" label="Zoom out" disabled={zoom === 100} onClick={() => changeZoom(-10)} />
+          <GameIconButton icon="fit" label="Fit graph to screen" onClick={() => {
             zoomAnchor.current = null;
             setZoom(100);
             viewport.current?.scrollTo({ top: 0, left: 0 });
-          }}>{zoom === 100 ? "Fit" : `${zoom}%`}</button>
-          <button type="button" aria-label="Zoom in" disabled={zoom === 300} onClick={() => changeZoom(10)}>+</button>
+          }} />
+          <GameIconButton icon="plus" label="Zoom in" disabled={zoom === 300} onClick={() => changeZoom(10)} />
+          {mobile && <output className="graphZoomValue" aria-label="Graph zoom level">{zoom}%</output>}
+        </div>
         </div>
       </div>
     </div>

@@ -8,15 +8,20 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 import AppHeader from "./components/AppHeader";
 import RouteMetadata from "./components/RouteMetadata";
 import { IS_CRAZYGAMES } from "./platform";
+import { AppearanceContext, useAppearance } from "./hooks/useAppearance";
+import { MobileLayoutContext, useMobileViewport } from "./hooks/useMobileLayout";
 
 const DevPreview = import.meta.env.DEV ? lazy(() => import("./dev/DevPreview.jsx")) : null;
 
 function App() {
   const location = useLocation();
+  const appearancePreferences = useAppearance();
+  const mobile = useMobileViewport();
   const hasSeed = new URLSearchParams(location.search).has("seed");
 
   return (
-    <>
+    <AppearanceContext.Provider value={appearancePreferences}>
+    <MobileLayoutContext.Provider value={mobile}>
       {!IS_CRAZYGAMES && <RouteMetadata />}
       {!IS_CRAZYGAMES && <AnalyticsTracker />}
       <AppHeader />
@@ -41,7 +46,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}
-    </>
+    </MobileLayoutContext.Provider>
+    </AppearanceContext.Provider>
   );
 }
 

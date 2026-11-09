@@ -11,6 +11,9 @@ import SoundToggle from "./SoundToggle";
 import { useSoundEffects } from "../hooks/useSoundEffects";
 import { IS_CRAZYGAMES } from "../platform";
 import { trackEvent } from "../utils/analytics";
+import { useMobileLayout } from "../hooks/useMobileLayout";
+import MobileGameShell from "./MobileGameShell";
+import GameIconButton from "./GameIconButton";
 
 function resetGraphColors(graph) {
   return {
@@ -23,6 +26,7 @@ function resetGraphColors(graph) {
 }
 
 function CustomMode() {
+  const mobile = useMobileLayout();
   const [searchParams, setSearchParams] = useSearchParams();
   const seed = searchParams.get("seed");
   const sharedPuzzle = useMemo(
@@ -112,7 +116,7 @@ function handleGenerateGraph() {
     parsedVertexCount < 3 ||
     parsedVertexCount > 24
   ) {
-    return;
+    return false;
   }
 
   const nextGraph = generateRandomGraph(
@@ -136,6 +140,7 @@ function handleGenerateGraph() {
     nextParams.delete("seed");
     setSearchParams(nextParams, { replace: true });
   }
+  return true;
 }
 
 async function handleSharePuzzle() {
@@ -202,29 +207,9 @@ function handleVertexClick(vertexId) {
   }
 }
 
-  return (
-    <main className="app gameApp">
-      <header className="gameHeading">
-        <div>
-          <p className="eyebrow">Custom Graph</p>
-          <h1>{sharedPuzzle.graph ? "A shared challenge" : "Make it your own"}</h1>
-        </div>
-        <p>Connected circles must have different colors.</p>
-      </header>
-
-      {linkMessage && <p role="status">{linkMessage}</p>}
-
-      <section className="customLayout">
-        <div className="gamePanel">
-          <div className="levelHeader">
-            <div>
-              <p className="eyebrow">Generated Puzzle</p>
-              <h2>{currentGraph.name}</h2>
-              <p>{currentGraph.description}</p>
-            </div>
-          </div>
-
-            <GraphCanvas
+  const graph = (<GraphCanvas
+              mobile={mobile}
+              controls={mobile && <GameIconButton icon="reset" label="Reset colors" onClick={handleResetColors} />}
               key={`${currentGraph.id}-${seed}`}
               vertices={currentGraph.vertices}
               edges={currentGraph.edges}
@@ -234,17 +219,23 @@ function handleVertexClick(vertexId) {
               height={currentGraph.height}
               colorTheme={activeTheme}
               toolbar={
-                <SoundToggle
+                !mobile && <SoundToggle
                   soundEnabled={soundEnabled}
                   onSoundEnabledChange={setSoundEnabled}
                   onPreviewSound={() => playSound("button", { force: true })}
                 />
               }
-            />
-        </div>
-
-        <aside className="statusPanel customControls">
-          <details className="generatorSettings">
+            />);
+  const settings = inline => (<GameSettings
+            inline={inline}
+            soundControl={inline && <SoundToggle soundEnabled={soundEnabled} onSoundEnabledChange={setSoundEnabled} onPreviewSound={() => playSound("button", { force: true })} />}
+            selectedThemeId={selectedThemeId}
+            onThemeChange={setSelectedThemeId}
+            activeTheme={activeTheme}
+            customTheme={customTheme}
+            onCustomThemeChange={setCustomTheme}
+          />);
+  const generator = close => (<details className="generatorSettings">
             <summary>Generate another puzzle</summary>
             <div className="generatorFields">
 
@@ -290,9 +281,40 @@ function handleVertexClick(vertexId) {
             />
           </div>
 
-          <button onClick={handleGenerateGraph}>Generate Graph</button>
+          <button onClick={() => { if (handleGenerateGraph()) close?.(); }}>Generate Graph</button>
             </div>
-          </details>
+          </details>);
+  if (mobile) return <MobileGameShell title={currentGraph.name} subtitle={sharedPuzzle.graph ? "Shared graph" : "Random graph"} conflicts={conflicts.length} recolors={recolors} settings={() => settings(true)} description="Random graphs may or may not be 3-colorable."
+    menuContent={close => <>{generator(close)}<p>{currentGraph.vertices.length} circles · {currentGraph.edges.length} connections</p>{!IS_CRAZYGAMES && <><button type="button" onClick={handleSharePuzzle}>Share puzzle</button><p role="status">{shareMessage}</p>{shareUrl && <input aria-label="Puzzle link" readOnly value={shareUrl} />}</>}</>}
+  >{linkMessage && <p role="status">{linkMessage}</p>}{solved && <div className="completionCard statusBox solved" role="status"><div className="completionBadge">✓</div><h3>Solved!</h3><p>This is a valid 3-coloring.</p><button type="button" onClick={handleResetColors}>Reset Colors</button></div>}{graph}</MobileGameShell>;
+
+  return (
+    <main className="app gameApp">
+      <header className="gameHeading">
+        <div>
+          <p className="eyebrow">Custom Graph</p>
+          <h1>{sharedPuzzle.graph ? "A shared challenge" : "Make it your own"}</h1>
+        </div>
+        <p>Connected circles must have different colors.</p>
+      </header>
+
+      {linkMessage && <p role="status">{linkMessage}</p>}
+
+      <section className="customLayout">
+        <div className="gamePanel">
+          <div className="levelHeader">
+            <div>
+              <p className="eyebrow">Generated Puzzle</p>
+              <h2>{currentGraph.name}</h2>
+              <p>{currentGraph.description}</p>
+            </div>
+          </div>
+
+            {graph}
+        </div>
+
+        <aside className="statusPanel customControls">
+          {generator()}
 
           {!IS_CRAZYGAMES && <button onClick={handleSharePuzzle}>Share Puzzle</button>}
           {!IS_CRAZYGAMES && <p role="status">{shareMessage}</p>}
@@ -342,13 +364,7 @@ function handleVertexClick(vertexId) {
 
           <button onClick={handleResetColors}>Reset Colors</button>
 
-          <GameSettings
-            selectedThemeId={selectedThemeId}
-            onThemeChange={setSelectedThemeId}
-            activeTheme={activeTheme}
-            customTheme={customTheme}
-            onCustomThemeChange={setCustomTheme}
-          />
+          {settings(false)}
 
           <details className="generatorNote">
             <summary>About random graphs</summary>

@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+
+export const AppearanceContext = createContext(null);
 
 const STORAGE_KEY = "3color-appearance";
 const MODES = ["system", "light", "dark"];

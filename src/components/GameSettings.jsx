@@ -1,6 +1,13 @@
 import ColorThemePicker from "./ColorThemePicker";
+import AppearanceControl from "./AppearanceControl";
 
-function GameSettings({ soundControl, ...themeProps }) {
+function GameSettings({ soundControl, inline = false, ...themeProps }) {
+  const content = <div className="settingsContent">
+    {soundControl && <div className="settingsSound">{soundControl}</div>}
+    {inline && <AppearanceControl />}
+    <ColorThemePicker {...themeProps} />
+  </div>;
+  if (inline) return <section className="gameSettings menuSettings">{content}</section>;
   return (
     <details className="gameSettings">
       <summary>
@@ -9,10 +16,7 @@ function GameSettings({ soundControl, ...themeProps }) {
           <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </summary>
-      <div className="settingsContent">
-        {soundControl && <div className="settingsSound">{soundControl}</div>}
-        <ColorThemePicker {...themeProps} />
-      </div>
+      {content}
     </details>
   );
 }
