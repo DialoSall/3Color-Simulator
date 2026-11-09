@@ -46,7 +46,8 @@ try {
     const images = [], measurements = [];
     for (const level of levels.slice(19)) {
       await send("Page.navigate", { url: `${base}/levels/${level.id}` });
-      await until(`document.querySelector('.gameHeading h1')?.textContent.startsWith('Level ${level.id} ') && document.querySelectorAll('.vertexGroup').length === ${level.vertices.length}`);
+      await until(`(document.querySelector('.mobileGameIdentity h1')?.textContent === ${JSON.stringify(level.name)} || document.querySelector('.gameHeading h1')?.textContent.startsWith('Level ${level.id} ')) && document.querySelectorAll('.vertexGroup').length === ${level.vertices.length}`);
+      if (width <= 600) await ev("document.querySelector('[aria-label=\"Fit graph to screen\"]').click()");
       await pause(60);
       const measurement = await ev(`(() => {
         const graph = document.querySelector('.graphCanvas'), wrap = document.querySelector('.graphCanvasWrap');
@@ -82,14 +83,14 @@ try {
           await until(`document.querySelectorAll('.vertexGroup')[${index}].getAttribute('aria-label').includes(', red,')`);
         }
         assert.ok(await ev("document.querySelectorAll('.conflictEdge').length > 0"));
-        await ev("[...document.querySelectorAll('button')].find(button => button.textContent === 'Reset Puzzle').click()");
+        await ev("(document.querySelector('[aria-label=\"Reset puzzle\"]') ?? [...document.querySelectorAll('button')].find(button => button.textContent === 'Reset Puzzle')).click()");
         await until("[...document.querySelectorAll('.vertexGroup')].every(vertex => vertex.getAttribute('aria-label').includes('uncolored'))");
         await ev("document.querySelector('.vertexGroup').focus()");
         await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
         await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
         await until("document.querySelector('.vertexGroup').getAttribute('aria-label').includes(', red,')");
         await ev("document.querySelector('[aria-label=\"Zoom in\"]').click()");
-        await until("document.querySelector('[aria-label=\"Fit graph to screen\"]').textContent === '110%'");
+        await until("document.querySelector('.graphCanvasWrap').dataset.zoom === '110'");
         await ev("document.querySelector('[aria-label=\"Fit graph to screen\"]').click()");
         const solution = solveThreeColoring(level, { dynamic: true }).solution;
         for (let i = 0; i < level.vertices.length; i++) {

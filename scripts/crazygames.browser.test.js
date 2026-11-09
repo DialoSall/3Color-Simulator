@@ -67,7 +67,7 @@ test("CrazyGames upload works in a cross-origin iframe on a nested plain static 
     if (/context|frame|destroyed/i.test(error.message)) return false;
     throw error;
   }), expression);
-  const graph = date => until(`document.querySelector('.levelHeader h2')?.textContent === ${JSON.stringify(getDailyPuzzleForDate(date).name)} && document.querySelectorAll('.vertex').length === ${getDailyPuzzleForDate(date).vertices.length}`);
+  const graph = date => until(`document.querySelector('.levelHeader h2, .mobileGameIdentity h1')?.textContent === ${JSON.stringify(getDailyPuzzleForDate(date).name)} && document.querySelectorAll('.vertex').length === ${getDailyPuzzleForDate(date).vertices.length}`);
   const navigate = async path => { await ev(`location.hash = ${JSON.stringify(path)}`); await until(`location.hash === '#${path}' && !!document.querySelector('main')`); };
   const resize = async (width, height, mobile = false) => {
     await send("Emulation.setDeviceMetricsOverride", { width: Math.max(width, 1000), height: Math.max(height, 900), deviceScaleFactor: 1, mobile });
@@ -175,7 +175,7 @@ test("CrazyGames upload works in a cross-origin iframe on a nested plain static 
   await t.test("zoom, tracing, palettes, appearance and generators work at larger desktop and mobile sizes", async () => {
     await resize(1216, 684);
     await click('[aria-label="Zoom in"]');
-    assert.equal(await ev("document.querySelector('[aria-label=\"Fit graph to screen\"]').textContent"), "110%");
+    assert.equal(await ev("document.querySelector('.graphCanvasWrap').dataset.zoom"), "110");
     await click('[aria-label="Fit graph to screen"]');
     await navigate("/custom"); await until("document.querySelectorAll('.vertex').length===8");
     assert.equal(await ev("Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Share Puzzle')"), false);
@@ -222,8 +222,12 @@ test("CrazyGames upload works in a cross-origin iframe on a nested plain static 
     assert.ok(await ev("document.documentElement.scrollWidth<=innerWidth+1"));
     const screenshot = await send("Page.captureScreenshot", { format: "png", clip: { x: 0, y: 0, width: 390, height: 844, scale: 1 } });
     await writeFile(join(tmpdir(), "3color-crazygames-mobile.png"), Buffer.from(screenshot.data, "base64"));
-    await click(".soundToggle");
+    assert.equal(await ev("document.querySelector('.graphToolbar')"), null);
+    await click('[aria-label="Open game menu"]');
+    await until("!!document.querySelector('.gameMenu[open]')");
+    await click(".gameSettings .soundToggle");
     await until("localStorage.getItem('3color-sound-enabled')==='true'");
+    await click('[aria-label="Close game menu"]');
     await ev("window.__resumeCalls=0;const context=window.__audio.at(-1);const resume=context.resume.bind(context);Object.defineProperty(context,'state',{configurable:true,value:'interrupted'});context.resume=()=>{window.__resumeCalls++;Object.defineProperty(context,'state',{configurable:true,value:'running'});return resume()}");
     await click(".vertexGroup:nth-of-type(2)");
     assert.equal(await ev("window.__resumeCalls"), 1);
@@ -243,10 +247,16 @@ test("CrazyGames upload works in a cross-origin iframe on a nested plain static 
     await writeFile(join(tmpdir(), "3color-crazygames-mobile-onboarding.png"), Buffer.from(screenshot.data, "base64"));
     await ev("document.querySelector('.vertexGroup').dispatchEvent(new MouseEvent('click',{bubbles:true}))");
     await until("document.querySelector('.tutorialGuidance').textContent.includes('Step 2')");
+    await click('[aria-label="Open game menu"]');
+    await until("!!document.querySelector('.gameMenu[open]')");
     await ev("document.querySelector('.soundToggle').click()");
     await until("document.querySelector('.soundToggle').getAttribute('aria-pressed')==='false'");
+    await click('[aria-label="Close game menu"]');
     await navigate("/daily"); await graph("2026-11-04");
+    await click('[aria-label="Open game menu"]');
+    await until("!!document.querySelector('.gameMenu[open]')");
     assert.equal(await ev("document.querySelector('.soundToggle').getAttribute('aria-pressed')"), "false");
+    await click('[aria-label="Close game menu"]');
     await solve("2026-11-04"); await until("!!document.querySelector('.dailyStreakReinforcement')");
     assert.deepEqual(browser.errors, []);
     await writeFile(join(tmpdir(), "3color-crazygames-browser-metrics.json"), JSON.stringify(metrics, null, 2));

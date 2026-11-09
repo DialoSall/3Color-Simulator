@@ -54,7 +54,7 @@ test("production Daily date routes, navigation, retention, analytics and offline
   };
   const graph = async date => {
     const puzzle = getDailyPuzzleForDate(date);
-    await until(`document.querySelector('.levelHeader h2')?.textContent === ${JSON.stringify(puzzle.name)} && document.querySelectorAll('.vertex').length === ${puzzle.vertices.length}`);
+    await until(`document.querySelector('.levelHeader h2, .mobileGameIdentity h1')?.textContent === ${JSON.stringify(puzzle.name)} && document.querySelectorAll('.vertex').length === ${puzzle.vertices.length}`);
   };
   const button = async text => {
     await ev(`Array.from(document.querySelectorAll('button')).find(button => button.textContent.trim() === ${JSON.stringify(text)}).click()`);

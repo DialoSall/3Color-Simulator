@@ -1,8 +1,11 @@
-import { Link, NavLink } from "react-router-dom";
-import { useAppearance } from "../hooks/useAppearance";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import AppearanceControl from "./AppearanceControl";
+import { useMobileLayout } from "../hooks/useMobileLayout";
 
 function AppHeader() {
-  const { appearance, setAppearance } = useAppearance();
+  const { pathname } = useLocation();
+  const mobile = useMobileLayout();
+  if (mobile && (/^\/(levels|daily|custom)(\/|$)/.test(pathname) || (import.meta.env.DEV && pathname === "/dev/preview"))) return null;
   return (
     <header className="siteHeader">
       <Link to="/" className="brand" aria-label="3Color home">
@@ -15,14 +18,7 @@ function AppHeader() {
         <NavLink to="/custom">Random</NavLink>
         {import.meta.env.DEV && <NavLink to="/dev/preview" title="Development preview">Preview</NavLink>}
       </nav>
-      <label className="appearanceControl">
-        <span>Appearance</span>
-        <select value={appearance} onChange={(event) => setAppearance(event.target.value)}>
-          <option value="system">System</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </label>
+      <AppearanceControl />
     </header>
   );
 }
