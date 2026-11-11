@@ -42,7 +42,6 @@ function GraphCanvas({
   const canvas = useRef(null);
   const viewport = useRef(null);
   const zoomAnchor = useRef(null);
-  const initialViewApplied = useRef(false);
   const holdTimer = useRef(null);
   const pointer = useRef(null);
   const suppressClick = useRef(false);
@@ -65,14 +64,6 @@ function GraphCanvas({
       if (!availableWidth || !availableHeight) return;
       const scale = Math.min(availableWidth / width, availableHeight / height);
       const next = { width: width * scale, height: height * scale, viewportWidth: availableWidth };
-      if (mobile && !initialViewApplied.current) {
-        initialViewApplied.current = true;
-        const playZoom = hasGuidance ? 100 : Math.max(100, Math.min(200, Math.floor(availableHeight / next.height * 10) * 10));
-        if (playZoom > 100) {
-          zoomAnchor.current = { x: next.width / 2, y: next.height / 2 };
-          setZoom(playZoom);
-        }
-      }
       setFitSize((previous) => previous &&
         Math.abs(previous.width - next.width) < 0.5 &&
         Math.abs(previous.height - next.height) < 0.5 &&
