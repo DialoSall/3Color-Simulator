@@ -48,18 +48,21 @@ A wide graph cannot occupy portrait height at whole-graph fit without distortion
 or cropping. The old blank area mainly came from that aspect ratio, compounded
 by controls and page sections. Merely removing text would not solve it.
 
-Normal mobile play therefore starts at a **uniform, height-limited zoom capped
-at 200%**, centered horizontally. The visible hint says **“Drag to explore · Fit
-for overview”**, and the percentage remains visible. **Horizontal panning is
-intentional and required to inspect every vertex on wide boards.** The Fit icon
-returns to 100%, resets panning, and reveals every circle in one tap. It is not
-a claim that a 780px-wide SVG fits on a 390px-wide phone.
+Mobile puzzles now start at **100% Fit**, with every circle visible. Players can
+zoom in manually for larger circles and pan to explore; the Fit icon restores
+100% and resets panning. The zoomed hint appears only after manually zooming.
+The automatic initial zoom and its initialization ref were removed on November 11.
+No geometry, shell styling or gameplay mechanics changed.
 
 The active Level 1 tutorial always uses whole-graph fit, including replay, so all
 three targets remain visible. Instructions, four-step progression, allowed moves,
 highlights, skip, replay and persistence are unchanged.
 
-### Actual measurements
+### Historical measurements from the November 9 redesign
+
+The measurements and screenshots below document the earlier auto-zoomed design.
+They are retained as historical evidence, not the current initial view. The Fit
+dimensions describe the whole-graph overview now used by default.
 
 CSS pixels, initial page scroll zero. Level 30 has an unchanged 900×650 viewBox.
 “Visible window” is the screen-width section of the zoomed SVG. Circle diameter
@@ -176,7 +179,7 @@ responsive view selection and icon controls; closed drawers do not mount setting
 No graph-layout engine, extra timer, puzzle payload or preference store was added.
 No graph data/topology/content, Daily IDs/schedule, storage schemas or SEO changed.
 
-Remaining limitations are deliberate initial horizontal cropping in play view,
-letterboxing in Fit/tutorial view, and internal result scrolling on very short
-screens. Physical iOS/Android color pickers, browser chrome and fullscreen policy
+Remaining limitations are letterboxing in Fit/tutorial view and internal result
+scrolling on very short screens. Manual zoom can crop the graph and requires
+panning; the initial view no longer does. Physical iOS/Android color pickers, browser chrome and fullscreen policy
 have not been checked on hardware; Chrome touch emulation and iframe checks pass.

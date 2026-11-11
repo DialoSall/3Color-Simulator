@@ -40,7 +40,7 @@ function GameMenu({ settings, content, description, onReplayTutorial }) {
         </nav>
         {content && <section className="gameMenuSection">{content(() => setOpen(false))}</section>}
         <section className="gameMenuSection"><h2>Settings</h2>{settings ? settings() : <AppearanceControl />}</section>
-        <section className="gameMenuSection gameHelp"><h2>How to play</h2><p>3 colors. Connected circles can’t match.</p>{description && <p>{description}</p>}<p>Tap a circle to change its color. Hold it to trace its connections. Mobile play starts zoomed for larger circles. Drag to explore, or use Fit to see the whole graph.</p>{onReplayTutorial ? <button type="button" onClick={() => { onReplayTutorial(); setOpen(false); }}>Replay tutorial</button> : <Link to="/levels/1" onClick={() => setOpen(false)}>Learn in Level 1 →</Link>}</section>
+        <section className="gameMenuSection gameHelp"><h2>How to play</h2><p>3 colors. Connected circles can’t match.</p>{description && <p>{description}</p>}<p>Tap a circle to change its color. Hold it to trace its connections. Zoom in for larger circles, then drag to explore. Fit restores the whole graph.</p>{onReplayTutorial ? <button type="button" onClick={() => { onReplayTutorial(); setOpen(false); }}>Replay tutorial</button> : <Link to="/levels/1" onClick={() => setOpen(false)}>Learn in Level 1 →</Link>}</section>
       </>}
     </dialog>
   </>;
